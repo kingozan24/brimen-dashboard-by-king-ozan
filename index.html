@@ -1,0 +1,3206 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BRIMEN Dashboard - Unit Pagelaran</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --surface2: #1a2236;
+    --surface3: #202d42;
+    --border: #2a3a52;
+    --accent: #3b82f6;
+    --accent2: #10b981;
+    --accent3: #f59e0b;
+    --accent4: #ef4444;
+    --accent5: #8b5cf6;
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --text3: #64748b;
+    --font: 'Plus Jakarta Sans', sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:var(--font); min-height:100vh; font-size:14px; }
+
+  /* WATERMARK */
+  body::before {
+    content: 'Created by Moch Fauzan Asyari © Copyright Moch Fauzan Asyari';
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-35deg);
+    font-size: 28px;
+    font-weight: 800;
+    font-family: var(--font);
+    color: rgba(255,255,255,0.025);
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 0;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    user-select: none;
+  }
+  body::after {
+    content: 'Created by Moch Fauzan Asyari © Copyright Moch Fauzan Asyari';
+    position: fixed;
+    top: 30%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-35deg);
+    font-size: 28px;
+    font-weight: 800;
+    font-family: var(--font);
+    color: rgba(255,255,255,0.025);
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 0;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    user-select: none;
+  }
+  .main { position: relative; z-index: 1; }
+
+  /* SIDEBAR */
+  .sidebar {
+    position:fixed; left:0; top:0; bottom:0; width:240px;
+    background:var(--surface); border-right:1px solid var(--border);
+    display:flex; flex-direction:column; z-index:100;
+  }
+  .sidebar-logo {
+    padding:20px; border-bottom:1px solid var(--border);
+    display:flex; align-items:center; gap:10px;
+  }
+  .logo-icon {
+    width:36px; height:36px; background:linear-gradient(135deg,#3b82f6,#8b5cf6);
+    border-radius:8px; display:flex; align-items:center; justify-content:center;
+    font-size:18px; font-weight:800; color:white; flex-shrink:0;
+  }
+  .logo-text { font-size:15px; font-weight:700; line-height:1.2; }
+  .logo-sub { font-size:10px; color:var(--text3); font-weight:500; text-transform:uppercase; letter-spacing:1px; }
+  .nav { flex:1; padding:12px 0; overflow-y:auto; }
+  .nav-label { font-size:10px; color:var(--text3); text-transform:uppercase; letter-spacing:1.5px; padding:8px 20px 4px; margin-top:8px; }
+  .nav-item {
+    display:flex; align-items:center; gap:10px; padding:10px 20px;
+    cursor:pointer; border-left:3px solid transparent;
+    color:var(--text2); font-weight:500; font-size:13px;
+    transition:all .15s;
+  }
+  .nav-item:hover { background:var(--surface2); color:var(--text); }
+  .nav-item.active { background:var(--surface2); color:var(--accent); border-left-color:var(--accent); }
+  .nav-item .icon { font-size:16px; width:20px; text-align:center; }
+  .sidebar-footer { padding:16px; border-top:1px solid var(--border); }
+  .user-badge {
+    display:flex; align-items:center; gap:10px;
+    background:var(--surface2); border-radius:10px; padding:10px;
+  }
+  .avatar { width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg,#10b981,#3b82f6); display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; }
+  .user-info .name { font-size:13px; font-weight:600; }
+  .user-info .role { font-size:11px; color:var(--text3); }
+
+  /* MAIN */
+  .main { margin-left:240px; min-height:100vh; }
+  .topbar {
+    position:sticky; top:0; z-index:50;
+    background:var(--bg); border-bottom:1px solid var(--border);
+    padding:0 28px; height:60px; display:flex; align-items:center; justify-content:space-between;
+  }
+  .page-title { font-size:16px; font-weight:700; }
+  .topbar-right { display:flex; align-items:center; gap:12px; }
+  .date-badge {
+    background:var(--surface); border:1px solid var(--border);
+    padding:6px 12px; border-radius:8px; font-size:12px; color:var(--text2);
+    font-family:var(--mono);
+  }
+  .notif-btn {
+    width:36px; height:36px; border-radius:8px;
+    background:var(--surface); border:1px solid var(--border);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; position:relative; font-size:16px;
+  }
+  .notif-dot {
+    position:absolute; top:6px; right:6px; width:8px; height:8px;
+    background:var(--accent4); border-radius:50%; border:2px solid var(--bg);
+  }
+
+  .content { padding:24px 28px; }
+
+  /* PAGE SECTIONS */
+  .page { display:none; }
+  .page.active { display:block; }
+
+  /* STATS GRID */
+  .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px; }
+  .stat-card {
+    background:var(--surface); border:1px solid var(--border); border-radius:14px;
+    padding:18px; position:relative; overflow:hidden;
+  }
+  .stat-card::before {
+    content:''; position:absolute; top:0; right:0;
+    width:80px; height:80px; border-radius:50%;
+    background:var(--card-color,#3b82f6); opacity:.08;
+    transform:translate(20px,-20px);
+  }
+  .stat-icon { font-size:24px; margin-bottom:10px; }
+  .stat-value { font-size:28px; font-weight:800; font-family:var(--mono); color:var(--card-color,var(--text)); }
+  .stat-label { font-size:12px; color:var(--text2); margin-top:4px; }
+  .stat-trend { font-size:11px; margin-top:8px; display:flex; align-items:center; gap:4px; }
+  .trend-up { color:var(--accent2); }
+  .trend-alert { color:var(--accent3); }
+
+  /* SECTION HEADER */
+  .section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .section-title { font-size:15px; font-weight:700; display:flex; align-items:center; gap:8px; }
+  .section-title .dot { width:8px; height:8px; border-radius:50%; background:var(--accent); }
+
+  /* TABLES */
+  .table-card {
+    background:var(--surface); border:1px solid var(--border); border-radius:14px;
+    overflow:hidden; margin-bottom:20px;
+  }
+  .table-header {
+    padding:14px 18px; border-bottom:1px solid var(--border);
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .table-title { font-size:14px; font-weight:600; }
+  .table-wrap { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; }
+  th {
+    background:var(--surface2); padding:10px 14px; text-align:left;
+    font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.8px;
+    color:var(--text3); white-space:nowrap;
+  }
+  td { padding:11px 14px; border-bottom:1px solid var(--border); font-size:13px; white-space:nowrap; }
+  tr:last-child td { border-bottom:none; }
+  tr:hover td { background:var(--surface2); }
+
+  /* BADGES */
+  .badge {
+    display:inline-flex; align-items:center; gap:4px;
+    padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600;
+  }
+  .badge-blue { background:rgba(59,130,246,.15); color:#60a5fa; }
+  .badge-green { background:rgba(16,185,129,.15); color:#34d399; }
+  .badge-yellow { background:rgba(245,158,11,.15); color:#fbbf24; }
+  .badge-red { background:rgba(239,68,68,.15); color:#f87171; }
+  .badge-purple { background:rgba(139,92,246,.15); color:#a78bfa; }
+  .badge-gray { background:rgba(100,116,139,.15); color:#94a3b8; }
+
+  /* BUTTONS */
+  .btn {
+    padding:8px 16px; border-radius:8px; border:none; cursor:pointer;
+    font-family:var(--font); font-size:13px; font-weight:600;
+    display:inline-flex; align-items:center; gap:6px; transition:all .15s;
+  }
+  .btn-primary { background:var(--accent); color:white; }
+  .btn-primary:hover { background:#2563eb; }
+  .btn-success { background:var(--accent2); color:white; }
+  .btn-success:hover { background:#059669; }
+  .btn-ghost { background:var(--surface2); color:var(--text2); border:1px solid var(--border); }
+  .btn-ghost:hover { background:var(--surface3); color:var(--text); }
+  .btn-danger { background:var(--accent4); color:white; }
+  .btn-sm { padding:5px 10px; font-size:12px; }
+
+  /* FORM */
+  .form-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:16px; }
+  .form-grid.cols3 { grid-template-columns:repeat(3,1fr); }
+  .form-group { display:flex; flex-direction:column; gap:6px; }
+  .form-group.full { grid-column:1/-1; }
+  label { font-size:12px; font-weight:600; color:var(--text2); text-transform:uppercase; letter-spacing:.6px; }
+  input, select, textarea {
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:8px; padding:9px 12px; color:var(--text);
+    font-family:var(--font); font-size:13px; outline:none;
+    transition:border-color .15s;
+  }
+  input:focus, select:focus, textarea:focus { border-color:var(--accent); }
+  select option { background:var(--surface2); }
+  textarea { resize:vertical; min-height:80px; }
+  .form-section {
+    background:var(--surface); border:1px solid var(--border); border-radius:14px;
+    padding:20px; margin-bottom:20px;
+  }
+  .form-section-title {
+    font-size:13px; font-weight:700; margin-bottom:16px;
+    padding-bottom:10px; border-bottom:1px solid var(--border);
+    display:flex; align-items:center; gap:8px; color:var(--accent);
+  }
+
+  /* TASK CARDS */
+  .task-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+  .task-card {
+    background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    padding:16px; position:relative;
+  }
+  .task-card.urgent { border-left:3px solid var(--accent4); }
+  .task-card.warning { border-left:3px solid var(--accent3); }
+  .task-card.normal { border-left:3px solid var(--accent2); }
+  .task-card.done { opacity:.6; }
+  .task-type { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
+  .task-title { font-size:14px; font-weight:600; margin-bottom:4px; }
+  .task-desc { font-size:12px; color:var(--text2); margin-bottom:10px; }
+  .task-footer { display:flex; align-items:center; justify-content:space-between; }
+  .days-badge {
+    font-size:11px; font-weight:700; padding:3px 8px; border-radius:6px;
+    font-family:var(--mono);
+  }
+  .days-urgent { background:rgba(239,68,68,.2); color:#f87171; }
+  .days-warn { background:rgba(245,158,11,.2); color:#fbbf24; }
+  .days-ok { background:rgba(16,185,129,.2); color:#34d399; }
+  .task-done-btn {
+    font-size:11px; padding:4px 10px; border-radius:6px;
+    background:var(--surface3); border:1px solid var(--border);
+    color:var(--text2); cursor:pointer; font-family:var(--font); font-weight:600;
+  }
+  .task-done-btn:hover { background:var(--accent2); color:white; border-color:var(--accent2); }
+
+  /* PHOTO JAMINAN */
+  .jaminan-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+  .jaminan-card {
+    background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    overflow:hidden;
+  }
+  .jaminan-photo {
+    height:140px; background:var(--surface2);
+    display:flex; align-items:center; justify-content:center;
+    font-size:40px; position:relative; overflow:hidden;
+  }
+  .jaminan-photo img { width:100%; height:100%; object-fit:cover; }
+  .jaminan-photo .no-photo { font-size:13px; color:var(--text3); display:flex; flex-direction:column; align-items:center; gap:4px; }
+  .jaminan-info { padding:12px; }
+  .jaminan-name { font-size:13px; font-weight:600; margin-bottom:3px; }
+  .jaminan-norek { font-size:11px; color:var(--text3); font-family:var(--mono); margin-bottom:6px; }
+  .upload-overlay {
+    position:absolute; inset:0; background:rgba(0,0,0,.6);
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; transition:.2s; cursor:pointer;
+  }
+  .jaminan-photo:hover .upload-overlay { opacity:1; }
+  .upload-overlay span { background:var(--accent); color:white; padding:6px 12px; border-radius:6px; font-size:12px; font-weight:600; }
+
+  /* CLAIM TABLE */
+  .sla-bar { height:6px; background:var(--surface3); border-radius:3px; overflow:hidden; margin-top:4px; }
+  .sla-fill { height:100%; border-radius:3px; transition:width .5s; }
+  .sla-ok { background:var(--accent2); }
+  .sla-warn { background:var(--accent3); }
+  .sla-over { background:var(--accent4); }
+
+  /* SEARCH BAR */
+  .search-bar {
+    display:flex; gap:10px; margin-bottom:16px;
+  }
+  .search-input {
+    flex:1; background:var(--surface); border:1px solid var(--border);
+    border-radius:8px; padding:9px 12px; color:var(--text); font-family:var(--font);
+    font-size:13px; outline:none;
+  }
+  .search-input:focus { border-color:var(--accent); }
+
+  /* MODAL */
+  .modal-overlay {
+    position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:200;
+    display:flex; align-items:center; justify-content:center;
+    display:none;
+  }
+  .modal-overlay.open { display:flex; }
+  .modal {
+    background:var(--surface); border:1px solid var(--border); border-radius:16px;
+    width:640px; max-height:90vh; overflow-y:auto;
+  }
+  .modal-header {
+    padding:18px 22px; border-bottom:1px solid var(--border);
+    display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; background:var(--surface);
+  }
+  .modal-title { font-size:16px; font-weight:700; }
+  .modal-close { background:none; border:none; color:var(--text2); font-size:20px; cursor:pointer; }
+  .modal-body { padding:22px; }
+  .modal-footer { padding:16px 22px; border-top:1px solid var(--border); display:flex; gap:10px; justify-content:flex-end; }
+
+  /* TABS */
+  .tabs { display:flex; gap:4px; background:var(--surface2); border-radius:10px; padding:4px; margin-bottom:20px; }
+  .tab {
+    flex:1; padding:8px; text-align:center; border-radius:8px;
+    font-size:13px; font-weight:600; cursor:pointer; color:var(--text3);
+    transition:all .15s;
+  }
+  .tab.active { background:var(--surface); color:var(--text); box-shadow:0 1px 4px rgba(0,0,0,.3); }
+
+  /* MANTRI TAG */
+  .mantri-tag {
+    display:inline-flex; align-items:center; gap:6px;
+    background:var(--surface3); border:1px solid var(--border);
+    border-radius:6px; padding:3px 8px; font-size:11px;
+  }
+  .mantri-dot { width:6px; height:6px; border-radius:50%; background:var(--accent3); }
+
+  /* EMPTY STATE */
+  .empty-state {
+    padding:40px; text-align:center; color:var(--text3);
+  }
+  .empty-state .icon { font-size:40px; margin-bottom:10px; }
+  .empty-state .title { font-size:15px; font-weight:600; color:var(--text2); margin-bottom:4px; }
+
+  /* PENSION DATA */
+  .pensiunan-card {
+    background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    padding:16px; display:flex; align-items:flex-start; gap:14px;
+    margin-bottom:10px;
+  }
+  .pensiunan-avatar {
+    width:44px; height:44px; border-radius:10px;
+    background:linear-gradient(135deg,#8b5cf6,#3b82f6);
+    display:flex; align-items:center; justify-content:center;
+    font-size:18px; font-weight:700; flex-shrink:0;
+  }
+  .pensiunan-info { flex:1; }
+  .pensiunan-name { font-size:14px; font-weight:700; margin-bottom:3px; }
+  .pensiunan-meta { font-size:11px; color:var(--text2); display:flex; gap:12px; flex-wrap:wrap; }
+
+  /* TOAST */
+  /* GLOBAL SEARCH */
+  .global-search-wrap { position:relative; flex:1; max-width:360px; }
+  .global-search-input {
+    width:100%; background:var(--surface2); border:1px solid var(--border);
+    border-radius:8px; padding:8px 14px; color:var(--text);
+    font-family:var(--font); font-size:13px; outline:none;
+  }
+  .global-search-input:focus { border-color:var(--accent); }
+  #global-search-results {
+    position:absolute; top:calc(100% + 6px); left:0; right:0;
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:12px; z-index:150; display:none;
+    box-shadow:0 8px 32px rgba(0,0,0,.4); overflow:hidden; max-height:400px; overflow-y:auto;
+  }
+  .gs-item {
+    padding:10px 14px; cursor:pointer; border-bottom:1px solid var(--border);
+    transition:background .1s;
+  }
+  .gs-item:hover { background:var(--surface2); }
+  .gs-item:last-child { border-bottom:none; }
+
+  .toast-container { position:fixed; bottom:24px; right:24px; z-index:300; display:flex; flex-direction:column; gap:8px; }
+  .toast {
+    background:var(--surface); border:1px solid var(--border); border-radius:10px;
+    padding:12px 16px; font-size:13px; font-weight:500;
+    display:flex; align-items:center; gap:10px; min-width:280px;
+    animation:slideIn .3s ease;
+  }
+  @keyframes slideIn { from { transform:translateX(100px); opacity:0; } to { transform:translateX(0); opacity:1; } }
+  .toast.success { border-left:3px solid var(--accent2); }
+  .toast.error { border-left:3px solid var(--accent4); }
+  .toast.info { border-left:3px solid var(--accent); }
+
+  /* GRID 2 */
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+
+  /* MANTRI STATUS */
+  .mantri-status-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:20px; }
+  .mantri-status-card {
+    background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:14px;
+  }
+  .mantri-name-h { font-size:13px; font-weight:700; margin-bottom:8px; display:flex; align-items:center; gap:6px; }
+  .berkas-count { font-size:24px; font-weight:800; font-family:var(--mono); color:var(--accent3); }
+  .berkas-label { font-size:11px; color:var(--text3); }
+
+  /* ===== MOBILE RESPONSIVE ===== */
+  .hamburger {
+    display:none; position:fixed; top:12px; left:12px; z-index:200;
+    width:40px; height:40px; border-radius:10px;
+    background:var(--surface); border:1px solid var(--border);
+    align-items:center; justify-content:center;
+    cursor:pointer; font-size:18px;
+  }
+  .sidebar-overlay {
+    display:none; position:fixed; inset:0;
+    background:rgba(0,0,0,.6); z-index:99;
+  }
+  .sidebar-overlay.show { display:block; }
+
+  @media (max-width:768px) {
+    .hamburger { display:flex; }
+    .sidebar {
+      transform:translateX(-100%);
+      transition:transform .3s ease;
+      z-index:100;
+    }
+    .sidebar.open { transform:translateX(0); }
+    .main { margin-left:0; }
+    .topbar { padding:0 16px 0 60px; }
+    .content { padding:16px; }
+    .stats-grid { grid-template-columns:repeat(2,1fr); gap:10px; }
+    .task-grid { grid-template-columns:1fr; }
+    .jaminan-grid { grid-template-columns:repeat(2,1fr); }
+    .mantri-status-grid { grid-template-columns:repeat(2,1fr); }
+    .form-grid { grid-template-columns:1fr !important; }
+    .form-grid.cols3 { grid-template-columns:1fr !important; }
+    .grid2 { grid-template-columns:1fr; }
+    .table-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+    table { min-width:600px; }
+    .modal { width:95vw !important; max-height:85vh; margin:10px; }
+    .modal-body { padding:14px; }
+    .tabs { flex-wrap:wrap; }
+    .tab { flex:none; min-width:120px; }
+    .search-bar { flex-direction:column; }
+    .stat-value { font-size:22px; }
+    .page-title { font-size:14px; }
+    .date-badge { display:none; }
+    .btn { font-size:12px; padding:7px 12px; }
+    .section-header { flex-direction:column; align-items:flex-start; gap:8px; }
+    /* Lock screen */
+    .lock-card { width:90vw; padding:24px; }
+    /* Welcome splash */
+    .welcome-title { font-size:24px; }
+  }
+
+  @media (max-width:1200px) {
+    .stats-grid { grid-template-columns:repeat(2,1fr); }
+    .task-grid { grid-template-columns:repeat(2,1fr); }
+    .jaminan-grid { grid-template-columns:repeat(2,1fr); }
+  }
+
+  /* PASSWORD SCREEN */
+  .lock-screen {
+    position:fixed;inset:0;background:var(--bg);z-index:9999;
+    display:flex;align-items:center;justify-content:center;flex-direction:column;
+  }
+  .lock-card {
+    background:var(--surface);border:1px solid var(--border);border-radius:20px;
+    padding:40px;width:360px;text-align:center;
+  }
+  .lock-icon { font-size:48px;margin-bottom:16px; }
+  .lock-title { font-size:22px;font-weight:800;margin-bottom:4px; }
+  .lock-sub { font-size:13px;color:var(--text3);margin-bottom:24px; }
+  .lock-input {
+    width:100%;background:var(--surface2);border:1px solid var(--border);
+    border-radius:10px;padding:12px 16px;color:var(--text);font-family:var(--font);
+    font-size:15px;outline:none;text-align:center;letter-spacing:3px;
+    margin-bottom:12px;
+  }
+  .lock-input:focus { border-color:var(--accent); }
+  .lock-btn {
+    width:100%;padding:12px;border-radius:10px;border:none;
+    background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:white;
+    font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;
+    transition:.2s;
+  }
+  .lock-btn:hover { opacity:.9;transform:translateY(-1px); }
+  .lock-error { color:var(--accent4);font-size:13px;margin-top:8px;display:none; }
+
+  /* WELCOME SPLASH */
+  .welcome-splash {
+    position:fixed;inset:0;background:var(--bg);z-index:9998;
+    display:flex;align-items:center;justify-content:center;flex-direction:column;
+    animation:splashOut 0.5s ease 3s forwards;
+  }
+  @keyframes splashOut {
+    to { opacity:0;pointer-events:none;display:none; }
+  }
+  .welcome-emoji { font-size:72px;animation:bounce 0.6s ease infinite alternate; }
+  @keyframes bounce { from{transform:translateY(0)} to{transform:translateY(-16px)} }
+  .welcome-title {
+    font-size:36px;font-weight:800;margin-top:20px;text-align:center;
+    background:linear-gradient(135deg,#f59e0b,#ef4444,#8b5cf6);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    animation:pulse 1s ease infinite alternate;
+  }
+  @keyframes pulse { from{opacity:.8;transform:scale(.98)} to{opacity:1;transform:scale(1.02)} }
+  .welcome-sub {
+    font-size:18px;font-weight:600;color:var(--accent2);margin-top:12px;
+    text-align:center;letter-spacing:1px;
+  }
+  .welcome-stars { font-size:28px;margin-top:16px;animation:spin 3s linear infinite; }
+  @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+</style>
+</head>
+<body>
+
+<!-- HAMBURGER & OVERLAY -->
+<button class="hamburger" id="hamburger" onclick="toggleSidebar()">☰</button>
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<!-- LOCK SCREEN -->
+<div class="lock-screen" id="lock-screen">
+  <div class="lock-card">
+    <div class="lock-icon">🔐</div>
+    <div class="lock-title">BRIMEN Dashboard</div>
+    <div class="lock-sub">Unit Pagelaran — Masukkan password untuk lanjut</div>
+    <input class="lock-input" type="password" id="lock-input" placeholder="••••••••••••" onkeydown="if(event.key==='Enter')checkPassword()">
+    <button class="lock-btn" onclick="checkPassword()">🔓 Masuk</button>
+    <div class="lock-error" id="lock-error">❌ Password salah! Coba lagi.</div>
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px">Ada 2 level akses:</div>
+      <div style="font-size:11px;color:var(--accent);font-weight:600">👑 King Ozan — Akses penuh semua fitur</div>
+      <div style="font-size:11px;color:var(--accent3);font-weight:600;margin-top:3px">👤 Rakyat — Input tugas & cek berkas saja</div>
+    </div>
+  </div>
+</div>
+
+<!-- WELCOME SPLASH -->
+<div class="welcome-splash" id="welcome-splash" style="display:none">
+  <div class="welcome-emoji">👑</div>
+  <div class="welcome-title">KING OZAN<br>SELAMAT DATANG!!!</div>
+  <div class="welcome-sub">🔥 SEMANGAT KERJANYA KARNA<br>KAMU HARUS KAYA 🔥</div>
+  <div class="welcome-stars">⭐</div>
+</div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">B</div>
+    <div>
+      <div class="logo-text">BRIMEN</div>
+      <div class="logo-sub">Unit Pagelaran</div>
+    </div>
+  </div>
+  <nav class="nav">
+    <div class="nav-label">Utama</div>
+    <div class="nav-item active" onclick="showPage('dashboard')">
+      <span class="icon">🏠</span> Dashboard
+    </div>
+    <div class="nav-item" onclick="showPage('tasks')">
+      <span class="icon">✅</span> Tugas & Deadline
+    </div>
+
+    <div class="nav-label">Berkas</div>
+    <div class="nav-item" onclick="showPage('input-berkas')">
+      <span class="icon">📂</span> Input Berkas
+    </div>
+    <div class="nav-item" onclick="showPage('berkas-aktif')">
+      <span class="icon">📋</span> Berkas Aktif (BRIMEN)
+    </div>
+    <div class="nav-item" onclick="showPage('jaminan')">
+      <span class="icon">🏠</span> Jaminan & Foto
+    </div>
+
+    <div class="nav-label">Data Nasabah</div>
+    <div class="nav-item" onclick="showPage('master-brimen')">
+      <span class="icon">🗄️</span> Master BRIMEN
+    </div>
+    <div class="nav-item" onclick="showPage('pensiunan')">
+      <span class="icon">👴</span> Nasabah Pensiunan
+    </div>
+
+    <div class="nav-label">Monitoring</div>
+    <div class="nav-item" onclick="showPage('claim')">
+      <span class="icon">🔖</span> Claim Berkas
+    </div>
+    <div class="nav-item" onclick="showPage('mantri')">
+      <span class="icon">👤</span> Mantri & Peminjaman
+    </div>
+    <div class="nav-item" onclick="showPage('pengikatan')">
+      <span class="icon">⚖️</span> Pengikatan Jaminan
+    </div>
+
+    <div class="nav-label">Sistem</div>
+    <div class="nav-item" onclick="showPage('log')">
+      <span class="icon">📜</span> Log Aktivitas
+    </div>
+    <div class="nav-item" onclick="showPage('settings')">
+      <span class="icon">⚙️</span> Pengaturan
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-badge">
+      <div class="avatar">CS</div>
+      <div class="user-info">
+        <div class="name" id="user-name-display">Customer Service</div>
+        <div class="role">Unit Pagelaran</div>
+      </div>
+    </div>
+    <div style="margin-top:10px;text-align:center;font-size:10px;color:var(--text3);line-height:1.6;padding:0 2px">
+      <div style="font-weight:600;color:var(--text2)">Created by</div>
+      <div style="font-weight:700;color:var(--accent);font-size:11px">Moch Fauzan Asyari</div>
+      <div>© Copyright Moch Fauzan Asyari</div>
+      <div>All rights reserved</div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <div class="page-title" id="page-title">Dashboard</div>
+    <div class="topbar-right" style="flex:1;justify-content:flex-end;gap:10px">
+      <div class="global-search-wrap">
+        <input class="global-search-input" id="global-search-input" placeholder="🔍 Cari nasabah, berkas, tugas..." oninput="globalSearch(this.value)">
+        <div id="global-search-results"></div>
+      </div>
+      <div class="date-badge" id="date-display"></div>
+      <div class="notif-btn" onclick="toggleNotif()">🔔<span class="notif-dot" id="notif-dot"></span></div>
+      <div class="notif-btn" onclick="showPage('settings')" title="Pengaturan">⚙️</div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ======================== DASHBOARD ======================== -->
+    <div class="page active" id="page-dashboard">
+      <div class="stats-grid">
+        <div class="stat-card" style="--card-color:#3b82f6">
+          <div class="stat-icon">📋</div>
+          <div class="stat-value" id="stat-total-berkas">0</div>
+          <div class="stat-label">Total Berkas Aktif</div>
+          <div class="stat-trend trend-up">↑ Terdaftar di sistem</div>
+        </div>
+        <div class="stat-card" style="--card-color:#10b981">
+          <div class="stat-icon">✅</div>
+          <div class="stat-value" id="stat-tugas-selesai">0</div>
+          <div class="stat-label">Tugas Selesai Hari Ini</div>
+          <div class="stat-trend trend-up">dari <span id="stat-total-tugas">0</span> tugas</div>
+        </div>
+        <div class="stat-card" style="--card-color:#f59e0b">
+          <div class="stat-icon">⏰</div>
+          <div class="stat-value" id="stat-deadline-dekat">0</div>
+          <div class="stat-label">Deadline ≤ 2 Hari</div>
+          <div class="stat-trend trend-alert">⚠ Segera diselesaikan</div>
+        </div>
+        <div class="stat-card" style="--card-color:#8b5cf6">
+          <div class="stat-icon">🔖</div>
+          <div class="stat-value" id="stat-claim">0</div>
+          <div class="stat-label">Berkas Di-Claim</div>
+          <div class="stat-trend">Sedang diproses mantri</div>
+        </div>
+      </div>
+
+      <!-- TUGAS HARI INI -->
+      <div class="section-header">
+        <div class="section-title"><div class="dot"></div>Tugas Harus Diselesaikan Hari Ini</div>
+        <button class="btn btn-primary btn-sm" onclick="showPage('tasks')">Lihat Semua →</button>
+      </div>
+      <div class="task-grid" id="dashboard-tasks-preview">
+        <div class="empty-state"><div class="icon">✅</div><div class="title">Belum ada tugas hari ini</div></div>
+      </div>
+
+      <br>
+      <!-- BERKAS TERBARU -->
+      <div class="grid2">
+        <div>
+          <div class="section-header">
+            <div class="section-title"><div class="dot" style="background:var(--accent2)"></div>Berkas Baru Terakhir Dibuat</div>
+          </div>
+          <div class="table-card">
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>No Berkas</th><th>Nama Debitur</th><th>Mantri</th><th>Status</th></tr></thead>
+                <tbody id="recent-berkas-table">
+                  <tr><td colspan="4" class="empty-state" style="padding:20px;text-align:center;color:var(--text3)">Belum ada data</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="section-header">
+            <div class="section-title"><div class="dot" style="background:var(--accent3)"></div>Claim Aktif (SLA Monitor)</div>
+          </div>
+          <div class="table-card">
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Nasabah</th><th>Hari</th><th>SLA</th></tr></thead>
+                <tbody id="dashboard-claims-preview">
+                  <tr><td colspan="3" style="padding:20px;text-align:center;color:var(--text3)">Belum ada claim</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================== TASKS ======================== -->
+    <div class="page" id="page-tasks">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+        <div>
+          <div style="font-size:13px;color:var(--text3);margin-bottom:4px">Progress hari ini</div>
+          <div style="font-size:13px;font-weight:600"><span id="done-count">0</span> dari <span id="total-count">0</span> tugas selesai</div>
+        </div>
+        <button class="btn btn-primary" onclick="openTaskModal()">+ Tambah Tugas</button>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active" onclick="filterTasks('all',this)">Semua</div>
+        <div class="tab" onclick="filterTasks('urgent',this)">Mendesak 🔴</div>
+        <div class="tab" onclick="filterTasks('warning',this)">Perlu Perhatian 🟡</div>
+        <div class="tab" onclick="filterTasks('done',this)">Selesai ✅</div>
+      </div>
+
+      <div class="task-grid" id="task-grid">
+        <div class="empty-state" style="grid-column:1/-1"><div class="icon">📝</div><div class="title">Belum ada tugas</div><div style="font-size:12px;margin-top:4px">Klik "+ Tambah Tugas" untuk menambah pekerjaan</div></div>
+      </div>
+    </div>
+
+    <!-- ======================== INPUT BERKAS ======================== -->
+    <div class="page" id="page-input-berkas">
+      <div class="tabs">
+        <div class="tab active" onclick="switchBerkasTab('baru',this)">📄 Berkas Baru</div>
+        <div class="tab" onclick="switchBerkasTab('lama',this)">🗂️ Berkas Lama (Update Norek)</div>
+      </div>
+
+      <!-- BERKAS BARU -->
+      <div id="tab-baru">
+        <div class="form-section">
+          <div class="form-section-title">📄 Informasi Pinjaman Baru</div>
+          <div class="form-grid cols3">
+            <div class="form-group">
+              <label>No Berkas (Auto-Generate)</label>
+              <input type="text" id="no-berkas-display" readonly placeholder="BRK-2025-XXXX" style="background:var(--surface3);color:var(--accent);font-family:var(--mono);font-weight:700">
+            </div>
+            <div class="form-group">
+              <label>No Rekening Pinjaman</label>
+              <input type="text" id="norek-baru" placeholder="4086-01-XXXXXXXXX">
+            </div>
+            <div class="form-group">
+              <label>No Pinjaman</label>
+              <input type="text" id="no-pinjaman" placeholder="Otomatis dari norek">
+            </div>
+          </div>
+          <div class="form-grid" style="margin-top:12px">
+            <div class="form-group">
+              <label>Nama Debitur</label>
+              <input type="text" id="nama-debitur-baru" placeholder="Nama lengkap nasabah">
+            </div>
+            <div class="form-group">
+              <label>CIF Nasabah</label>
+              <input type="text" id="cif-baru" placeholder="Cth: ABC1234">
+            </div>
+            <div class="form-group">
+              <label>Mantri Pengelola</label>
+              <select id="mantri-baru">
+                <option value="">-- Pilih Mantri --</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Tanggal Realisasi</label>
+              <input type="date" id="tgl-realisasi">
+            </div>
+          </div>
+        </div>
+
+        <!-- SLOT BERKAS -->
+        <div class="form-section">
+          <div class="form-section-title" style="justify-content:space-between">
+            <span>📂 Lokasi Berkas (Auto-Slot)</span>
+            <button class="btn btn-primary btn-sm" type="button" onclick="autoFillBerkasSlot()">🎯 Cari Slot Kosong Otomatis</button>
+          </div>
+          <div id="slot-berkas-info" style="background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;display:none">
+            <span style="color:var(--accent);font-weight:700">📍 Slot tersedia: </span><span id="slot-berkas-text"></span>
+          </div>
+          <div class="form-grid cols3">
+            <div class="form-group">
+              <label>Ruang</label>
+              <input type="text" id="ruang-baru" placeholder="I" value="I">
+            </div>
+            <div class="form-group">
+              <label>Lemari (A - L)</label>
+              <select id="lemari-baru" onchange="updateSlotPreview()">
+                <option value="">-- Pilih --</option>
+                <option>A</option><option>B</option><option>C</option><option>D</option>
+                <option>E</option><option>F</option><option>G</option><option>H</option>
+                <option>I</option><option>L</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Rak (1 - 8)</label>
+              <select id="rak-baru" onchange="updateSlotPreview()">
+                <option value="">-- Pilih --</option>
+                <option>1</option><option>2</option><option>3</option><option>4</option>
+                <option>5</option><option>6</option><option>7</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Baris (No Urut)</label>
+              <input type="number" id="baris-baru" placeholder="Otomatis / manual" min="1">
+            </div>
+            <div class="form-group">
+              <label>Label Berkas (Auto)</label>
+              <input type="text" id="label-berkas" readonly placeholder="I - A - 1 - 1" style="background:var(--surface3);color:var(--accent2);font-family:var(--mono);font-weight:700">
+            </div>
+          </div>
+          <!-- KAPASITAS VISUAL -->
+          <div style="margin-top:14px">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.6px;font-weight:600">Kapasitas Lemari</div>
+            <div id="kapasitas-grid" style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px"></div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title" style="justify-content:space-between">
+            <span>🏠 Data Jaminan (Auto-Slot)</span>
+            <button class="btn btn-success btn-sm" type="button" onclick="autoFillJaminanSlot()">🎯 Cari Slot Jaminan Otomatis</button>
+          </div>
+          <div id="slot-jaminan-info" style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;display:none">
+            <span style="color:var(--accent2);font-weight:700">📍 Slot jaminan: </span><span id="slot-jaminan-text"></span>
+          </div>
+          <div class="form-grid cols3">
+            <div class="form-group">
+              <label>Jenis Jaminan</label>
+              <select id="jenis-jaminan">
+                <option value="">-- Pilih --</option>
+                <option>SHM</option><option>AJB</option><option>APHT</option>
+                <option>BPKB</option><option>Letter C</option><option>SHM + APHT</option>
+                <option>AJB + APHT</option><option>AJB + Letter C</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>No & Tahun Dokumen</label>
+              <input type="text" id="no-dokumen" placeholder="Cth: No.163/2018">
+            </div>
+            <div class="form-group">
+              <label>Atas Nama</label>
+              <input type="text" id="atas-nama" placeholder="Nama pada sertifikat">
+            </div>
+          </div>
+          <div class="form-grid cols3" style="margin-top:12px">
+            <div class="form-group">
+              <label>Lemari Jaminan (J / K)</label>
+              <select id="lemari-jaminan" onchange="updateJaminanSlotPreview()">
+                <option value="">-- Pilih --</option>
+                <option>J</option><option>K</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Rak Jaminan (1 - 4)</label>
+              <select id="rak-jaminan" onchange="updateJaminanSlotPreview()">
+                <option value="">-- Pilih --</option>
+                <option>1</option><option>2</option><option>3</option><option>4</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Baris Jaminan</label>
+              <input type="number" id="baris-jaminan" placeholder="Otomatis / manual" min="1">
+            </div>
+            <div class="form-group">
+              <label>Label Jaminan (Auto)</label>
+              <input type="text" id="label-jaminan" readonly placeholder="I - J - 1 - 1 - 1" style="background:var(--surface3);color:var(--accent2);font-family:var(--mono);font-weight:700">
+            </div>
+          </div>
+          <!-- Kapasitas jaminan visual -->
+          <div style="margin-top:14px">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.6px;font-weight:600">Kapasitas Lemari Jaminan</div>
+            <div id="jaminan-kapasitas-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px"></div>
+          </div>
+          <div class="form-group" style="margin-top:12px">
+            <label>Foto Jaminan</label>
+            <input type="file" id="foto-jaminan" accept="image/*" onchange="previewFoto(this,'preview-foto-baru')">
+            <div id="preview-foto-baru" style="margin-top:8px;display:none"><img id="preview-img-baru" style="max-width:200px;border-radius:8px;border:1px solid var(--border)"></div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-primary" onclick="simpanBerkasBaru()">💾 Simpan Berkas Baru</button>
+          <button class="btn btn-ghost" onclick="resetFormBaru()">🔄 Reset</button>
+        </div>
+      </div>
+
+      <!-- BERKAS LAMA -->
+      <div id="tab-lama" style="display:none">
+        <div class="form-section">
+          <div class="form-section-title">🗂️ Update Norek Pinjaman Baru untuk Berkas Lama</div>
+          <div style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:12px;margin-bottom:16px;font-size:13px;color:var(--accent3)">
+            ⚠️ Berkas lama sudah ada di sistem. Masukan No Rekening Pinjaman baru yang baru terbit untuk ditambahkan.
+          </div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Cari Berkas Lama (Nama / CIF / Norek)</label>
+              <input type="text" id="cari-berkas-lama" placeholder="Ketik nama nasabah..." oninput="cariDataLama(this.value)">
+            </div>
+            <div class="form-group">
+              <label>Hasil Pencarian</label>
+              <select id="pilih-berkas-lama" onchange="pilihDataLama(this.value)">
+                <option value="">-- Cari dulu --</option>
+              </select>
+            </div>
+          </div>
+          <div id="berkas-lama-detail" style="display:none;margin-top:16px">
+            <div style="background:var(--surface2);border-radius:10px;padding:14px;margin-bottom:14px;font-size:13px" id="berkas-lama-info"></div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>No Rekening Pinjaman Baru</label>
+                <input type="text" id="norek-baru-lama" placeholder="4086-01-XXXXXXXXX">
+              </div>
+              <div class="form-group">
+                <label>Tanggal Realisasi Baru</label>
+                <input type="date" id="tgl-baru-lama">
+              </div>
+            </div>
+            <div style="margin-top:14px">
+              <button class="btn btn-success" onclick="updateBerkasLama()">✅ Update Norek Baru</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================== BERKAS AKTIF ======================== -->
+    <div class="page" id="page-berkas-aktif">
+      <div class="search-bar">
+        <input class="search-input" placeholder="🔍 Cari nama nasabah, no berkas, no rekening, CIF..." oninput="debounceSearch(this.value)" id="berkas-search-input">
+        <select id="filter-mantri-aktif" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:var(--font);font-size:13px;outline:none;min-width:160px" onchange="filterBerkasAktif('')">
+          <option value="">Semua Mantri</option>
+        </select>
+      </div>
+      <div class="table-card">
+        <div class="table-header">
+          <div class="table-title">📋 Daftar Berkas Aktif BRIMEN</div>
+          <div style="font-size:12px;color:var(--text3)">Total: <span id="count-aktif">0</span> berkas</div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>No Berkas</th><th>No Rekening</th><th>Nama Debitur</th><th>CIF</th><th>Jaminan</th><th>Lokasi Berkas</th><th>Mantri</th><th>Status Pinjam</th><th>Aksi</th></tr></thead>
+            <tbody id="berkas-aktif-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================== JAMINAN ======================== -->
+    <div class="page" id="page-jaminan">
+      <div class="search-bar">
+        <input class="search-input" placeholder="🔍 Cari jaminan berdasarkan nama nasabah atau no berkas..." oninput="filterJaminan(this.value)">
+      </div>
+      <div class="jaminan-grid" id="jaminan-grid">
+        <div class="empty-state" style="grid-column:1/-1"><div class="icon">📸</div><div class="title">Belum ada data jaminan</div></div>
+      </div>
+    </div>
+
+    <!-- ======================== MASTER BRIMEN ======================== -->
+    <div class="page" id="page-master-brimen">
+      <div class="search-bar">
+        <input class="search-input" placeholder="🔍 Cari nama nasabah, no rekening, CIF..." oninput="debounceSearchMaster(this.value)" id="master-search-input">
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-success btn-sm" onclick="downloadMasterExcel()">📥 Download Excel</button>
+          <button class="btn btn-primary btn-sm" onclick="showPage('input-berkas')">+ Tambah Baru</button>
+        </div>
+      </div>
+      <div class="table-card">
+        <div class="table-header">
+          <div class="table-title">🗄️ Master Data BRIMEN (Aktif + Lama)</div>
+          <div style="font-size:12px;color:var(--text3)">Total: <span id="count-master">0</span> data</div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>No Berkas</th><th>No Rek. Lama</th><th>No Rek. Baru</th><th>Nama Debitur</th><th>CIF</th><th>Jenis Jaminan</th><th>Lok. Berkas</th><th>Lok. Jaminan</th><th>Mantri</th><th>Status</th></tr></thead>
+            <tbody id="master-brimen-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================== PENSIUNAN ======================== -->
+    <div class="page" id="page-pensiunan">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div></div>
+        <button class="btn btn-primary" onclick="openPensiunanModal()">+ Tambah Nasabah Pensiunan</button>
+      </div>
+      <div class="search-bar">
+        <input class="search-input" placeholder="🔍 Cari nasabah pensiunan..." oninput="filterPensiunan(this.value)">
+      </div>
+      <div id="pensiunan-list">
+        <div class="empty-state"><div class="icon">👴</div><div class="title">Belum ada data nasabah pensiunan</div><div style="font-size:12px;margin-top:4px">Tambah data nasabah pensiunan yang memiliki pinjaman</div></div>
+      </div>
+    </div>
+
+    <!-- ======================== CLAIM ======================== -->
+    <div class="page" id="page-claim">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div></div>
+        <button class="btn btn-primary" onclick="openClaimModal()">+ Buat Claim Baru</button>
+      </div>
+      <div class="table-card">
+        <div class="table-header">
+          <div class="table-title">🔖 Daftar Claim Aktif</div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>No Claim</th><th>No Rekening</th><th>No Polis</th><th>Nama Nasabah</th><th>Tgl Claim</th><th>Hari Ke</th><th>SLA</th><th>Syarat</th><th>Status</th><th>Aksi</th></tr></thead>
+            <tbody id="claim-table">
+              <tr><td colspan="10" style="padding:20px;text-align:center;color:var(--text3)">Belum ada claim</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================== MANTRI ======================== -->
+    <div class="page" id="page-mantri">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div></div>
+        <button class="btn btn-primary" onclick="openPinjamModal()">+ Catat Peminjaman Berkas</button>
+      </div>
+
+      <div class="mantri-status-grid" id="mantri-status-cards"></div>
+
+      <div class="table-card">
+        <div class="table-header">
+          <div class="table-title">👤 Riwayat Peminjaman Berkas oleh Mantri</div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>No Berkas</th><th>Nasabah</th><th>Dipinjam Oleh</th><th>Tgl Pinjam</th><th>Keperluan</th><th>Status</th><th>Aksi</th></tr></thead>
+            <tbody id="mantri-table">
+              <tr><td colspan="7" style="padding:20px;text-align:center;color:var(--text3)">Belum ada peminjaman</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================== LOG AKTIVITAS ======================== -->
+    <div class="page" id="page-log">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
+        <button class="btn btn-ghost btn-sm" onclick="localStorage.removeItem('brimen_log');renderLog();toast('Log dibersihkan','info')">🗑 Hapus Log</button>
+      </div>
+      <div class="table-card">
+        <div class="table-header"><div class="table-title">📜 Riwayat Aktivitas</div></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Waktu</th><th>User</th><th>Aksi</th><th>Detail</th></tr></thead>
+            <tbody id="log-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================== SETTINGS ======================== -->
+    <div class="page" id="page-settings">
+      <div class="form-section">
+        <div class="form-section-title">📱 Notifikasi Telegram</div>
+        <div style="background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);border-radius:8px;padding:12px;margin-bottom:16px;font-size:13px">
+          <b>Cara setup:</b><br>
+          1. Buka Telegram → cari <b>@BotFather</b> → ketik /newbot<br>
+          2. Isi nama bot: <b>BRIMEN Pagelaran</b><br>
+          3. Copy token yang diberikan BotFather<br>
+          4. Start bot kamu → buka <code style="background:var(--surface3);padding:2px 6px;border-radius:4px">https://api.telegram.org/bot[TOKEN]/getUpdates</code><br>
+          5. Ambil angka "id" dari bagian "chat"
+        </div>
+        <div class="form-grid">
+          <div class="form-group full">
+            <label>Bot Token</label>
+            <input type="text" id="tg-token-input" placeholder="7123456789:AAFxxxxxxxxxxxxx">
+          </div>
+          <div class="form-group">
+            <label>Chat ID Kamu</label>
+            <input type="text" id="tg-chatid-input" placeholder="123456789">
+          </div>
+          <div class="form-group" style="justify-content:flex-end;padding-top:20px">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0">
+              <input type="checkbox" id="tg-enabled" style="width:16px;height:16px">
+              <span style="font-size:13px;font-weight:600;color:var(--text)">Aktifkan Notifikasi Telegram</span>
+            </label>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:16px">
+          <button class="btn btn-primary" onclick="saveTelegramConfig()">💾 Simpan</button>
+          <button class="btn btn-ghost" onclick="testTelegram()">📤 Test Kirim</button>
+        </div>
+        <div id="tg-status" style="margin-top:12px;font-size:12px;color:var(--text3)"></div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">🔔 Jadwal Notifikasi</div>
+        <div style="font-size:13px;color:var(--text2);line-height:1.8">
+          Notifikasi akan dikirim otomatis setiap kali dashboard dibuka dan ada kondisi berikut:<br>
+          • ⚠️ <b>H-1</b> sebelum deadline tugas<br>
+          • 📅 <b>H-3</b> sebelum deadline tugas<br>
+          • ⚖️ <b>H-1</b> sebelum deadline pengikatan jaminan<br>
+          • ⚖️ <b>H-3</b> sebelum deadline pengikatan jaminan<br>
+          <br>
+          <span style="color:var(--text3);font-size:11px">*Notifikasi dikirim maksimal 1x per hari untuk menghindari spam</span>
+        </div>
+        <button class="btn btn-ghost btn-sm" style="margin-top:12px" onclick="checkDeadlineNotifs();toast('Cek notifikasi dijalankan manual','info')">🔄 Cek Sekarang</button>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">💾 Backup Data</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-ghost" onclick="backupData()">📥 Download Backup JSON</button>
+          <button class="btn btn-ghost" onclick="document.getElementById('restore-input').click()">📤 Restore dari Backup</button>
+          <input type="file" id="restore-input" accept=".json" style="display:none" onchange="restoreData(this)">
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================== PENGIKATAN JAMINAN ======================== -->
+    <div class="page" id="page-pengikatan">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div></div>
+        <button class="btn btn-primary" onclick="openPengikatanModal()">+ Tambah Pengikatan</button>
+      </div>
+      <div class="search-bar">
+        <input class="search-input" placeholder="🔍 Cari pengikatan berdasarkan nama debitur / notaris..." oninput="filterPengikatan(this.value)">
+        <select id="filter-status-pengikatan" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:var(--font);font-size:13px;outline:none;min-width:160px" onchange="filterPengikatan('')">
+          <option value="">Semua Status</option>
+          <option value="Proses">Sedang Proses</option>
+          <option value="Di Notaris">Di Notaris</option>
+          <option value="Selesai">Selesai</option>
+        </select>
+      </div>
+      <div class="table-card">
+        <div class="table-header">
+          <div class="table-title">⚖️ Daftar Pengikatan Jaminan</div>
+          <div style="font-size:12px;color:var(--text3)">Total: <span id="count-pengikatan">0</span> pengikatan</div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Nama Debitur</th>
+                <th>Nominal Pinjaman</th>
+                <th>Notaris</th>
+                <th>Tgl Dikirim</th>
+                <th>Diambil Oleh</th>
+                <th>Lokasi Berkas</th>
+                <th>Deadline Selesai</th>
+                <th>Sisa Hari</th>
+                <th>Foto</th>
+                <th>Status</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="pengikatan-table">
+              <tr><td colspan="11" style="padding:20px;text-align:center;color:var(--text3)">Belum ada data pengikatan</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</main>
+
+<!-- ============== MODALS ============== -->
+
+<!-- MODAL TASK -->
+<div class="modal-overlay" id="modal-task">
+  <div class="modal" style="width:520px">
+    <div class="modal-header">
+      <div class="modal-title">📝 Tambah Tugas</div>
+      <button class="modal-close" onclick="closeModal('modal-task')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group full"><label>Judul Tugas</label><input type="text" id="task-title" placeholder="Cth: Proses klaim nasabah A"></div>
+        <div class="form-group full"><label>Deskripsi / Detail Pekerjaan</label><textarea id="task-desc" placeholder="Jelaskan apa yang perlu dilakukan..."></textarea></div>
+        <div class="form-group">
+          <label>Jenis Pekerjaan</label>
+          <select id="task-type">
+            <option value="Claim">Claim</option>
+            <option value="Berkas">Berkas</option>
+            <option value="CS">Customer Service</option>
+            <option value="Mantri">Koordinasi Mantri</option>
+            <option value="Lain">Lainnya</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Deadline</label>
+          <input type="date" id="task-deadline">
+        </div>
+        <div class="form-group">
+          <label>Prioritas</label>
+          <select id="task-priority">
+            <option value="urgent">🔴 Mendesak</option>
+            <option value="warning">🟡 Perlu Perhatian</option>
+            <option value="normal" selected>🟢 Normal</option>
+          </select>
+        </div>
+        <div class="form-group" id="task-claim-fields" style="display:none">
+          <label>Syarat Klaim</label>
+          <textarea id="task-syarat" placeholder="Daftar syarat yang diperlukan..." style="min-height:60px"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-task')">Batal</button>
+      <button class="btn btn-primary" onclick="simpanTask()">💾 Simpan Tugas</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CLAIM -->
+<div class="modal-overlay" id="modal-claim">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">🔖 Buat Claim Baru</div>
+      <button class="modal-close" onclick="closeModal('modal-claim')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label>No Rekening Pinjaman</label><input type="text" id="claim-norek" placeholder="4086-01-XXXXXXXXX" oninput="autoFillClaim(this.value)"></div>
+        <div class="form-group"><label>No Polis Asuransi</label><input type="text" id="claim-nopolis" placeholder="Nomor polis"></div>
+        <div class="form-group"><label>Nama Nasabah</label><input type="text" id="claim-nama" placeholder="Otomatis dari norek"></div>
+        <div class="form-group"><label>SLA (hari kerja)</label><input type="number" id="claim-sla" value="14" min="1"></div>
+        <div class="form-group full"><label>Jenis Claim</label>
+          <select id="claim-jenis">
+            <option>Klaim Meninggal Dunia</option>
+            <option>Klaim Cacat Tetap</option>
+            <option>Klaim Kebakaran</option>
+            <option>Klaim Kehilangan</option>
+            <option>Lainnya</option>
+          </select>
+        </div>
+        <div class="form-group full">
+          <label>Syarat Klaim (satu per baris)</label>
+          <textarea id="claim-syarat" placeholder="1. KTP Nasabah&#10;2. Surat Kematian / Dokter&#10;3. Kartu Keluarga&#10;4. Polis Asuransi Asli&#10;..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-claim')">Batal</button>
+      <button class="btn btn-primary" onclick="simpanClaim()">🔖 Submit Claim</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PINJAM BERKAS -->
+<div class="modal-overlay" id="modal-pinjam">
+  <div class="modal" style="width:520px">
+    <div class="modal-header">
+      <div class="modal-title">📤 Catat Peminjaman Berkas</div>
+      <button class="modal-close" onclick="closeModal('modal-pinjam')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label>Cari Berkas (Nama / Norek)</label><input type="text" id="pinjam-cari" oninput="cariUntukPinjam(this.value)" placeholder="Ketik nama nasabah..."></div>
+        <div class="form-group"><label>Pilih Berkas</label><select id="pinjam-berkas"><option value="">-- Cari dulu --</option></select></div>
+        <div class="form-group"><label>Dipinjam Oleh Mantri</label>
+          <select id="pinjam-mantri"><option value="">-- Pilih Mantri --</option></select>
+        </div>
+        <div class="form-group"><label>Tanggal Pinjam</label><input type="date" id="pinjam-tgl"></div>
+        <div class="form-group full"><label>Keperluan / Digunakan Untuk</label>
+          <select id="pinjam-keperluan">
+            <option>Survey Lapangan</option>
+            <option>Proses Pencairan</option>
+            <option>Pengecekan Jaminan</option>
+            <option>Klaim Asuransi</option>
+            <option>Perpanjangan Pinjaman</option>
+            <option>Lainnya</option>
+          </select>
+        </div>
+        <div class="form-group full"><label>Catatan Tambahan</label><textarea id="pinjam-catatan" placeholder="Keterangan tambahan jika ada..."></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-pinjam')">Batal</button>
+      <button class="btn btn-primary" onclick="simpanPinjaman()">📤 Catat Peminjaman</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PENSIUNAN -->
+<div class="modal-overlay" id="modal-pensiunan">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">👴 Tambah Nasabah Pensiunan</div>
+      <button class="modal-close" onclick="closeModal('modal-pensiunan')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label>Nama Lengkap</label><input type="text" id="pen-nama" placeholder="Nama nasabah pensiunan"></div>
+        <div class="form-group"><label>No KTP</label><input type="text" id="pen-ktp" placeholder="16 digit NIK"></div>
+        <div class="form-group"><label>No Rekening Pinjaman</label><input type="text" id="pen-norek" placeholder="4086-01-XXXXXXXXX"></div>
+        <div class="form-group"><label>Instansi Pensiun</label><input type="text" id="pen-instansi" placeholder="Cth: PLN, Pemda, TNI..."></div>
+        <div class="form-group"><label>Mantri Pengelola</label><select id="pen-mantri"><option value="">-- Pilih Mantri --</option></select></div>
+        <div class="form-group"><label>Besar Pinjaman</label><input type="number" id="pen-nominal" placeholder="0"></div>
+        <div class="form-group"><label>Tgl Realisasi</label><input type="date" id="pen-tgl"></div>
+        <div class="form-group"><label>Jangka Waktu (bulan)</label><input type="number" id="pen-jw" placeholder="24"></div>
+        <div class="form-group full"><label>Catatan</label><textarea id="pen-catatan" placeholder="Keterangan tambahan..."></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-pensiunan')">Batal</button>
+      <button class="btn btn-primary" onclick="simpanPensiunan()">💾 Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PENGIKATAN JAMINAN -->
+<div class="modal-overlay" id="modal-pengikatan">
+  <div class="modal" style="width:680px">
+    <div class="modal-header">
+      <div class="modal-title">⚖️ Tambah Pengikatan Jaminan</div>
+      <button class="modal-close" onclick="closeModal('modal-pengikatan')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-section">
+        <div class="form-section-title">📋 Informasi Debitur & Pinjaman</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Nama Debitur</label>
+            <input type="text" id="pik-nama" placeholder="Nama lengkap debitur">
+          </div>
+          <div class="form-group">
+            <label>No Rekening Pinjaman</label>
+            <input type="text" id="pik-norek" placeholder="4086-01-XXXXXXXXX">
+          </div>
+          <div class="form-group">
+            <label>Nominal Pinjaman (Rp)</label>
+            <input type="number" id="pik-nominal" placeholder="0">
+          </div>
+          <div class="form-group">
+            <label>Jenis Jaminan</label>
+            <select id="pik-jenis-jaminan">
+              <option value="">-- Pilih --</option>
+              <option>SHM</option><option>AJB</option><option>APHT</option>
+              <option>BPKB</option><option>Letter C</option><option>SHM + APHT</option>
+              <option>AJB + APHT</option><option>AJB + Letter C</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="form-section-title">⚖️ Informasi Notaris & Pengiriman</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Nama Notaris</label>
+            <input type="text" id="pik-notaris" placeholder="Nama kantor / notaris">
+          </div>
+          <div class="form-group">
+            <label>Tanggal Dikirim ke Notaris</label>
+            <input type="date" id="pik-tgl-kirim">
+          </div>
+          <div class="form-group">
+            <label>Diambil Oleh (Mantri/CS)</label>
+            <select id="pik-diambil-oleh">
+              <option value="">-- Pilih --</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Lokasi Berkas Saat Ini</label>
+            <select id="pik-lokasi">
+              <option value="Di Notaris">Di Notaris</option>
+              <option value="Dalam Perjalanan">Dalam Perjalanan ke Notaris</option>
+              <option value="Sudah Kembali">Sudah Kembali ke Kantor</option>
+              <option value="Lainnya">Lainnya</option>
+            </select>
+          </div>
+          <div class="form-group full">
+            <label>Keterangan Lokasi (opsional)</label>
+            <input type="text" id="pik-ket-lokasi" placeholder="Cth: Notaris Budi Santoso, Jl. Merdeka No.5">
+          </div>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="form-section-title">📅 Deadline & Foto</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Deadline Selesai Pengikatan</label>
+            <input type="date" id="pik-deadline">
+          </div>
+          <div class="form-group">
+            <label>Target Berkas Kembali</label>
+            <input type="date" id="pik-tgl-kembali">
+          </div>
+          <div class="form-group full">
+            <label>Foto Berkas Saat Dipinjam</label>
+            <input type="file" id="pik-foto" accept="image/*" onchange="previewPikFoto(this)">
+            <div id="pik-foto-preview" style="margin-top:8px;display:none">
+              <img id="pik-foto-img" style="max-width:220px;border-radius:8px;border:1px solid var(--border)">
+            </div>
+          </div>
+          <div class="form-group full">
+            <label>Catatan Tambahan</label>
+            <textarea id="pik-catatan" placeholder="Catatan proses, kendala, atau informasi lain..."></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-pengikatan')">Batal</button>
+      <button class="btn btn-primary" onclick="simpanPengikatan()">⚖️ Simpan Pengikatan</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// ============== SUPABASE CONFIG ==============
+const SUPABASE_URL = 'https://evwyncjnlcimzoeuyzfn.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2d3luY2pubGNpbXpvZXV5emZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2MzM0ODgsImV4cCI6MjA5MTIwOTQ4OH0.ecW5hk_S1g8OBgrD4vX3jM7GKKaUvVhnXbjdTxxVm_Y';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ============== SLOT DATA DARI EXCEL ==============
+// Berkas: max baris terpakai per lemari-rak (dari Excel)
+const BERKAS_SLOTS = {
+  "A":{"1":70,"2":70,"3":70,"4":70,"5":70,"6":70,"7":70,"8":0},
+  "B":{"1":70,"2":70,"3":70,"4":70,"5":70,"6":70,"7":70,"8":0},
+  "C":{"1":100,"2":100,"3":100,"4":100,"5":100,"6":100,"7":100,"8":0},
+  "D":{"1":100,"2":100,"3":100,"4":100,"5":100,"6":100,"7":100,"8":0},
+  "E":{"1":120,"2":120,"3":120,"4":120,"5":120,"6":120,"7":120,"8":0},
+  "F":{"1":120,"2":120,"3":120,"4":120,"5":120,"6":120,"7":120,"8":0},
+  "G":{"1":80,"2":80,"3":80,"4":80,"5":80,"6":80,"7":0,"8":0},
+  "H":{"1":70,"2":70,"3":70,"4":70,"5":70,"6":70,"7":70,"8":0},
+  "I":{"1":70,"2":70,"3":70,"4":70,"5":70,"6":70,"7":70,"8":0},
+  "J":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0},
+  "K":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0},
+  "L":{"1":70,"2":70,"3":70,"4":57,"5":0,"6":0,"7":0,"8":0}
+};
+// Jaminan: max baris terpakai per lemari-rak J&K, rak 1-4
+const JAMINAN_SLOTS = {
+  "J":{"1":60,"2":60,"3":60,"4":60},
+  "K":{"1":60,"2":60,"3":60,"4":0}
+};
+
+// Kapasitas maksimal per rak (berdasarkan pola di Excel)
+const BERKAS_KAPASITAS = {"A":70,"B":70,"C":100,"D":100,"E":120,"F":120,"G":80,"H":70,"I":70,"L":70};
+const JAMINAN_KAPASITAS = 60; // max per rak jaminan
+
+// Cari slot berkas kosong berikutnya (dari DB + BERKAS_SLOTS)
+function getNextBerkasSlot() {
+  // Build current usage dari DB (data yang sudah diinput via dashboard)
+  const dbUsed = {};
+  DB.berkas.forEach(b => {
+    if(b.lemari && b.rak && b.baris) {
+      const key = `${b.lemari}-${b.rak}`;
+      const cur = dbUsed[key] || 0;
+      const bNum = parseInt(b.baris) || 0;
+      if(bNum > cur) dbUsed[key] = bNum;
+    }
+  });
+
+  const lemaris = ['A','B','C','D','E','F','G','H','I','L'];
+  for(const l of lemaris) {
+    for(let r = 1; r <= 7; r++) {
+      const key = `${l}-${r}`;
+      const excelMax = parseInt(BERKAS_SLOTS[l]?.[r] || 0);
+      const dbMax = dbUsed[key] || 0;
+      const currentMax = Math.max(excelMax, dbMax);
+      const kapasitas = BERKAS_KAPASITAS[l] || 70;
+      if(currentMax < kapasitas) {
+        return { lemari: l, rak: r, baris: currentMax + 1,
+          label: `I - ${l} - ${r} - ${currentMax+1}` };
+      }
+    }
+  }
+  return null; // semua penuh
+}
+
+// Cari slot jaminan kosong berikutnya
+function getNextJaminanSlot() {
+  const dbUsed = {};
+  DB.berkas.forEach(b => {
+    if(b.lemariJaminan && b.rakJaminan && b.barisJaminan) {
+      const key = `${b.lemariJaminan}-${b.rakJaminan}`;
+      const cur = dbUsed[key] || 0;
+      const bNum = parseInt(b.barisJaminan) || 0;
+      if(bNum > cur) dbUsed[key] = bNum;
+    }
+  });
+
+  for(const l of ['J','K']) {
+    for(let r = 1; r <= 4; r++) {
+      const key = `${l}-${r}`;
+      const excelMax = parseInt(JAMINAN_SLOTS[l]?.[r] || 0);
+      const dbMax = dbUsed[key] || 0;
+      const currentMax = Math.max(excelMax, dbMax);
+      if(currentMax < JAMINAN_KAPASITAS) {
+        return { lemari: l, rak: r, baris: currentMax + 1,
+          label: `I - ${l} - ${r} - 1 - ${currentMax+1}` };
+      }
+    }
+  }
+  return null;
+}
+
+// Hitung ringkasan kapasitas untuk ditampilkan
+function getSlotSummary() {
+  const lemaris = ['A','B','C','D','E','F','G','H','I','J','K','L'];
+  const summary = [];
+  lemaris.forEach(l => {
+    let totalKap = 0, totalTerpakai = 0;
+    for(let r=1;r<=7;r++){
+      const kap = BERKAS_KAPASITAS[l]||70;
+      const used = parseInt(BERKAS_SLOTS[l]?.[r]||0);
+      if(r<=7||(l==='L'&&r<=4)) { // hanya rak yang ada
+        const hasRak = used > 0 || (l==='L'&&r<=4);
+        if(used>0 || (BERKAS_SLOTS[l]?.[r]!==undefined)) {
+          totalKap += kap; totalTerpakai += Math.min(used,kap);
+        }
+      }
+    }
+    if(totalKap>0) summary.push({lemari:l, terpakai:totalTerpakai, kapasitas:totalKap, pct:Math.round(totalTerpakai/totalKap*100)});
+  });
+  return summary;
+}
+
+// ============== DATA STORE (cache lokal) ==============
+const DB = {
+  berkas: [],
+  tasks: [],
+  claims: [],
+  pinjaman: [],
+  pensiunan: [],
+  pengikatan: [],
+  mantriList: [
+    {nama:'Muhamad Rio Albariq', pn:'EL 00368700'},
+    {nama:'Rizal Zaelani', pn:'00368697'},
+    {nama:'Dicky Dilian Pratama', pn:'00373816'},
+    {nama:'Jenal Mutaqin', pn:'00286699'},
+    {nama:'Ardi Nurdiandyah', pn:'00391982'},
+    {nama:'Yudistira', pn:'00371566'},
+    {nama:'Anggi Febriana', pn:'00162887'},
+    {nama:'Angga (Molen)', pn:'00341620'},
+    {nama:'Robi Akbar', pn:'-'},
+  ],
+  berkasCounter: 1
+};
+
+// Loading overlay
+function showLoading(msg='Menyimpan...') {
+  let el = document.getElementById('loading-overlay');
+  if(!el) {
+    el = document.createElement('div');
+    el.id = 'loading-overlay';
+    el.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999;display:flex;align-items:center;justify-content:center';
+    el.innerHTML = `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 32px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:12px"><span style="font-size:20px">⏳</span>${msg}</div>`;
+    document.body.appendChild(el);
+  }
+  el.style.display='flex';
+}
+function hideLoading() {
+  const el = document.getElementById('loading-overlay');
+  if(el) el.style.display='none';
+}
+
+// ============== SUPABASE CRUD ==============
+let isFirstLoad = true;
+
+async function dbLoad(silent = false) {
+  if(!silent) showLoading('Memuat data...');
+  try {
+    // Fetch berkas with pagination (supabase default limit 1000)
+    let allBerkas = [];
+    let from = 0;
+    const pageSize = 1000;
+    while(true) {
+      const {data, error} = await sb.from('berkas')
+        .select('*')
+        .order('tgl_input', {ascending:false})
+        .range(from, from + pageSize - 1);
+      if(error || !data || data.length === 0) break;
+      allBerkas = allBerkas.concat(data);
+      if(data.length < pageSize) break;
+      from += pageSize;
+    }
+
+    const [t,c,p,pen,pik] = await Promise.all([
+      sb.from('tasks').select('*').order('tgl_buat',{ascending:false}),
+      sb.from('claims').select('*').order('tgl_claim',{ascending:false}),
+      sb.from('pinjaman').select('*').order('id',{ascending:false}),
+      sb.from('pensiunan').select('*').order('id',{ascending:false}),
+      sb.from('pengikatan').select('*').order('id',{ascending:false})
+    ]);
+    DB.berkas = allBerkas.map(mapBerkas);
+    DB.tasks = (t.data||[]).map(mapTask);
+    DB.claims = (c.data||[]).map(mapClaim);
+    DB.pinjaman = (p.data||[]).map(mapPinjaman);
+    DB.pensiunan = (pen.data||[]).map(mapPensiunan);
+    DB.pengikatan = (pik.data||[]).map(mapPengikatan);
+    // counter berkas
+    if(DB.berkas.length > 0) {
+      const nums = DB.berkas.map(b => parseInt(b.noBerkas?.split('-')[2]||0)).filter(n=>!isNaN(n));
+      DB.berkasCounter = nums.length ? Math.max(...nums)+1 : 1;
+    }
+  } catch(e) { toast('Gagal load data: '+e.message,'error'); }
+  hideLoading();
+  if(!silent || isFirstLoad) {
+    isFirstLoad = false;
+    renderAll();
+    checkNotifDot();
+  } else {
+    // Silent: hanya update stats, tidak reset tampilan
+    updateDashboard();
+    checkNotifDot();
+  }
+}
+
+// Map dari kolom supabase (snake_case) ke camelCase
+function mapBerkas(r) {
+  return { id:r.id, noBerkas:r.no_berkas, norek:r.norek, norekLama:r.norek_lama, norekBaru:r.norek_baru,
+    namaDebitur:r.nama_debitur, cif:r.cif, mantri:r.mantri, tglRealisasi:r.tgl_realisasi,
+    jenisJaminan:r.jenis_jaminan, noDokumen:r.no_dokumen, atasan:r.atas_nama,
+    ruang:r.ruang, lemari:r.lemari, rak:r.rak, baris:r.baris, labelBerkas:r.label_berkas,
+    lemariJaminan:r.lemari_jaminan, rakJaminan:r.rak_jaminan, barisJaminan:r.baris_jaminan, labelJaminan:r.label_jaminan,
+    foto:r.foto };
+}
+function mapTask(r) {
+  return { id:r.id, title:r.title, deadline:r.deadline, desc:r.description,
+    type:r.type, priority:r.priority, syarat:r.syarat, done:r.done };
+}
+function mapClaim(r) {
+  return { id:r.id, norek:r.norek, noPolis:r.no_polis, namaNasabah:r.nama_nasabah,
+    sla:r.sla, jenis:r.jenis, syarat:r.syarat, status:r.status,
+    tglClaim:r.tgl_claim };
+}
+function mapPinjaman(r) {
+  return { id:r.id, noBerkas:r.no_berkas, namaDebitur:r.nama_debitur, mantri:r.mantri,
+    tgl:r.tgl, keperluan:r.keperluan, catatan:r.catatan, status:r.status };
+}
+function mapPengikatan(r) {
+  return { id:r.id, namaDebitur:r.nama_debitur, norek:r.norek, nominal:r.nominal,
+    jenisJaminan:r.jenis_jaminan, notaris:r.notaris, tglKirim:r.tgl_kirim,
+    diambilOleh:r.diambil_oleh, lokasi:r.lokasi, ketLokasi:r.ket_lokasi,
+    deadline:r.deadline, tglKembali:r.tgl_kembali, foto:r.foto,
+    catatan:r.catatan, status:r.status };
+}
+function mapPensiunan(r) {
+  return { id:r.id, nama:r.nama, ktp:r.ktp, norek:r.norek, instansi:r.instansi,
+    mantri:r.mantri, nominal:r.nominal, tgl:r.tgl, jw:r.jw, catatan:r.catatan };
+}
+
+// ============== DOWNLOAD EXCEL ==============
+async function downloadMasterExcel() {
+  showLoading('Menyiapkan Excel... (mengambil semua data)');
+  try {
+    // Fetch ALL data from Supabase
+    let allData = [];
+    let from = 0;
+    while(true) {
+      const {data, error} = await sb.from('berkas')
+        .select('*')
+        .order('lemari', {ascending:true})
+        .order('rak', {ascending:true})
+        .order('baris', {ascending:true})
+        .range(from, from+999);
+      if(error || !data || data.length===0) break;
+      allData = allData.concat(data);
+      if(data.length < 1000) break;
+      from += 1000;
+    }
+    hideLoading();
+
+    if(allData.length === 0) { toast('Tidak ada data!','error'); return; }
+
+    // Build rows matching original Excel template
+    const headers = [
+      'NO','Nama PN Pengelola','Nomor rekening','Nama Debitur','CIFNO','UNIT',
+      'RUANG','LEMARI/ ROLL O PACK','RAK','BARIS','LABEL','BPK',
+      'JENIS AGUNAN','NO & TAHUN','ATAS NAMA',
+      'RUANG JAMINAN','LEMARI JAMINAN','RAK JAMINAN','CLEAR HOLDER','BARIS JAMINAN','LABEL JAMINAN'
+    ];
+
+    const rows = allData.map((r, i) => {
+      const lemari = r.lemari||'';
+      const rak = r.rak||'';
+      const baris = r.baris||'';
+      const bpk = lemari && rak ? `R.I - ${lemari} - ${rak}` : '';
+      return [
+        i+1,
+        r.mantri||'',
+        r.norek||'',
+        r.nama_debitur||'',
+        r.cif||'',
+        'UNIT PAGELARAN',
+        r.ruang||'I',
+        lemari,
+        rak ? parseInt(rak)||rak : '',
+        baris ? parseInt(baris)||baris : '',
+        r.label_berkas||'',
+        bpk,
+        r.jenis_jaminan||'',
+        r.no_dokumen||'',
+        r.atas_nama||'',
+        'I',
+        r.lemari_jaminan||'',
+        r.rak_jaminan ? parseInt(r.rak_jaminan)||r.rak_jaminan : '',
+        r.rak_jaminan ? 1 : '',
+        r.baris_jaminan ? parseInt(r.baris_jaminan)||r.baris_jaminan : '',
+        r.label_jaminan||''
+      ];
+    });
+
+    // Create workbook
+    const wb = XLSX.utils.book_new();
+    const wsData = [headers, ...rows];
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+    // Column widths
+    ws['!cols'] = [
+      {wch:5},{wch:22},{wch:18},{wch:20},{wch:10},{wch:18},
+      {wch:7},{wch:8},{wch:5},{wch:7},{wch:16},{wch:14},
+      {wch:25},{wch:30},{wch:20},
+      {wch:7},{wch:8},{wch:5},{wch:8},{wch:7},{wch:20}
+    ];
+
+    // Style header row
+    const headerRange = XLSX.utils.decode_range(ws['!ref']);
+    for(let C = headerRange.s.c; C <= headerRange.e.c; C++) {
+      const addr = XLSX.utils.encode_cell({r:0, c:C});
+      if(!ws[addr]) continue;
+      ws[addr].s = {
+        font: {bold:true, color:{rgb:'FFFFFF'}},
+        fill: {fgColor:{rgb:'1E3A5F'}},
+        alignment: {horizontal:'center', wrapText:true}
+      };
+    }
+
+    XLSX.utils.book_append_sheet(wb, ws, 'BRIMEN AKTIF_REGISTER AGUNAN');
+
+    // Download
+    const today = new Date().toLocaleDateString('id-ID').replace(/\//g,'-');
+    XLSX.writeFile(wb, `MASTER_BRIMEN_${today}.xlsx`);
+    toast(`✅ Download selesai! ${allData.length} data berhasil diexport`,'success');
+  } catch(e) {
+    hideLoading();
+    toast('Gagal download: '+e.message,'error');
+  }
+}
+
+// ============== DEBOUNCE SEARCH ==============
+let searchTimer = null;
+function debounceSearch(q) {
+  clearTimeout(searchTimer);
+  if(!q || q.length === 0) { renderBerkasAktif(''); return; }
+  if(q.length >= 2) {
+    searchTimer = setTimeout(() => searchBerkasSupabase(q), 400);
+  }
+}
+
+let masterSearchTimer = null;
+function debounceSearchMaster(q) {
+  clearTimeout(masterSearchTimer);
+  if(!q || q.length === 0) { renderMasterBrimen(''); return; }
+  if(q.length >= 2) {
+    masterSearchTimer = setTimeout(async () => {
+      showLoading('Mencari...');
+      const {data} = await sb.from('berkas')
+        .select('*')
+        .or(`nama_debitur.ilike.%${q}%,norek.ilike.%${q}%,no_berkas.ilike.%${q}%,cif.ilike.%${q}%`)
+        .limit(200);
+      hideLoading();
+      if(!data) return;
+      const tbl = document.getElementById('master-brimen-table');
+      const cnt = document.getElementById('count-master');
+      if(cnt) cnt.textContent = data.length;
+      tbl.innerHTML = data.map(r => {
+        const b = mapBerkas(r);
+        return `<tr>
+          <td><span style="font-family:var(--mono);color:var(--accent);font-size:12px">${b.noBerkas}</span></td>
+          <td><span style="font-family:var(--mono);font-size:11px">${b.norekLama||b.norek||'-'}</span></td>
+          <td><span style="font-family:var(--mono);font-size:11px;color:${b.norekBaru?'var(--accent2)':'var(--text3)'}">${b.norekBaru||'—'}</span></td>
+          <td style="font-weight:600">${b.namaDebitur}</td>
+          <td><span style="font-family:var(--mono);font-size:11px;color:var(--text3)">${b.cif||'-'}</span></td>
+          <td><span class="badge badge-blue">${b.jenisJaminan||'-'}</span></td>
+          <td style="font-size:11px;font-family:var(--mono);color:var(--text3)">${b.labelBerkas||'-'}</td>
+          <td style="font-size:11px;font-family:var(--mono);color:var(--accent2)">${b.labelJaminan||'-'}</td>
+          <td>${b.mantri||'-'}</td>
+          <td><span class="badge badge-green">Aktif</span></td>
+        </tr>`;
+      }).join('');
+    }, 400);
+  }
+}
+
+// ============== SLOT FUNCTIONS ==============
+function autoFillBerkasSlot() {
+  const slot = getNextBerkasSlot();
+  if(!slot) { toast('Semua slot berkas penuh!','error'); return; }
+  document.getElementById('lemari-baru').value = slot.lemari;
+  document.getElementById('rak-baru').value = slot.rak;
+  document.getElementById('baris-baru').value = slot.baris;
+  document.getElementById('label-berkas').value = `I - ${slot.lemari} - ${slot.rak} - ${slot.baris}`;
+  document.getElementById('slot-berkas-info').style.display='block';
+  document.getElementById('slot-berkas-text').textContent = `Lemari ${slot.lemari}, Rak ${slot.rak}, Baris ${slot.baris} → Label: I - ${slot.lemari} - ${slot.rak} - ${slot.baris}`;
+  renderKapasitasGrid();
+  toast(`Slot otomatis: Lemari ${slot.lemari} Rak ${slot.rak} Baris ${slot.baris} ✅`,'success');
+}
+
+function autoFillJaminanSlot() {
+  const slot = getNextJaminanSlot();
+  if(!slot) { toast('Semua slot jaminan penuh!','error'); return; }
+  document.getElementById('lemari-jaminan').value = slot.lemari;
+  document.getElementById('rak-jaminan').value = slot.rak;
+  document.getElementById('baris-jaminan').value = slot.baris;
+  document.getElementById('label-jaminan').value = `I - ${slot.lemari} - ${slot.rak} - 1 - ${slot.baris}`;
+  document.getElementById('slot-jaminan-info').style.display='block';
+  document.getElementById('slot-jaminan-text').textContent = `Lemari ${slot.lemari}, Rak ${slot.rak}, Baris ${slot.baris} → Label: I - ${slot.lemari} - ${slot.rak} - 1 - ${slot.baris}`;
+  renderJaminanKapasitasGrid();
+  toast(`Slot jaminan: Lemari ${slot.lemari} Rak ${slot.rak} Baris ${slot.baris} ✅`,'success');
+}
+
+function updateSlotPreview() {
+  const l = document.getElementById('lemari-baru').value;
+  const r = document.getElementById('rak-baru').value;
+  const b = document.getElementById('baris-baru').value;
+  if(l && r && b) document.getElementById('label-berkas').value = `I - ${l} - ${r} - ${b}`;
+  else if(l && r) {
+    // Auto suggest next baris
+    const excelMax = parseInt(BERKAS_SLOTS[l]?.[r]||0);
+    const dbMax = DB.berkas.filter(x=>x.lemari===l&&x.rak==r).reduce((m,x)=>Math.max(m,parseInt(x.baris||0)),0);
+    const next = Math.max(excelMax,dbMax)+1;
+    document.getElementById('baris-baru').value = next;
+    document.getElementById('label-berkas').value = `I - ${l} - ${r} - ${next}`;
+  }
+  renderKapasitasGrid();
+}
+
+function updateJaminanSlotPreview() {
+  const l = document.getElementById('lemari-jaminan').value;
+  const r = document.getElementById('rak-jaminan').value;
+  const b = document.getElementById('baris-jaminan').value;
+  if(l && r && b) document.getElementById('label-jaminan').value = `I - ${l} - ${r} - 1 - ${b}`;
+  else if(l && r) {
+    const excelMax = parseInt(JAMINAN_SLOTS[l]?.[r]||0);
+    const dbMax = DB.berkas.filter(x=>x.lemariJaminan===l&&x.rakJaminan==r).reduce((m,x)=>Math.max(m,parseInt(x.barisJaminan||0)),0);
+    const next = Math.max(excelMax,dbMax)+1;
+    document.getElementById('baris-jaminan').value = next;
+    document.getElementById('label-jaminan').value = `I - ${l} - ${r} - 1 - ${next}`;
+  }
+  renderJaminanKapasitasGrid();
+}
+
+function renderKapasitasGrid() {
+  const g = document.getElementById('kapasitas-grid');
+  if(!g) return;
+  const lemaris = ['A','B','C','D','E','F','G','H','I','L'];
+  const selectedL = document.getElementById('lemari-baru')?.value;
+  g.innerHTML = lemaris.map(l => {
+    let totalKap=0, totalUsed=0;
+    for(let r=1;r<=7;r++){
+      const kap = BERKAS_KAPASITAS[l]||70;
+      const used = parseInt(BERKAS_SLOTS[l]?.[r]||0);
+      if(used>0||(l==='L'&&r<=4)||(BERKAS_SLOTS[l]?.[r]!==undefined&&r<=7)){
+        totalKap+=kap; totalUsed+=Math.min(used,kap);
+      }
+    }
+    if(totalKap===0) return '';
+    const pct = Math.round(totalUsed/totalKap*100);
+    const color = pct>=100?'var(--accent4)':pct>=80?'var(--accent3)':'var(--accent2)';
+    const isSelected = l===selectedL;
+    return `<div style="background:${isSelected?'rgba(59,130,246,.2)':'var(--surface2)'};border:1px solid ${isSelected?'var(--accent)':'var(--border)'};border-radius:8px;padding:8px;text-align:center">
+      <div style="font-size:13px;font-weight:700;color:${isSelected?'var(--accent)':'var(--text)'}">${l}</div>
+      <div style="font-size:10px;color:var(--text3);margin:3px 0">${totalUsed}/${totalKap}</div>
+      <div style="height:4px;background:var(--surface3);border-radius:2px"><div style="height:100%;width:${pct}%;background:${color};border-radius:2px"></div></div>
+      <div style="font-size:10px;margin-top:3px;color:${color};font-weight:700">${pct}%</div>
+    </div>`;
+  }).join('');
+}
+
+function renderJaminanKapasitasGrid() {
+  const g = document.getElementById('jaminan-kapasitas-grid');
+  if(!g) return;
+  const selectedL = document.getElementById('lemari-jaminan')?.value;
+  const selectedR = document.getElementById('rak-jaminan')?.value;
+  let html = '';
+  for(const l of ['J','K']) {
+    for(let r=1;r<=4;r++){
+      const used = parseInt(JAMINAN_SLOTS[l]?.[r]||0);
+      const kap = JAMINAN_KAPASITAS;
+      const pct = Math.round(used/kap*100);
+      const color = pct>=100?'var(--accent4)':pct>=80?'var(--accent3)':'var(--accent2)';
+      const isSelected = l===selectedL && r==selectedR;
+      html += `<div style="background:${isSelected?'rgba(16,185,129,.2)':'var(--surface2)'};border:1px solid ${isSelected?'var(--accent2)':'var(--border)'};border-radius:8px;padding:8px;text-align:center">
+        <div style="font-size:12px;font-weight:700;color:${isSelected?'var(--accent2)':'var(--text)'}">${l}-${r}</div>
+        <div style="font-size:10px;color:var(--text3);margin:3px 0">${used}/${kap}</div>
+        <div style="height:4px;background:var(--surface3);border-radius:2px"><div style="height:100%;width:${pct}%;background:${color};border-radius:2px"></div></div>
+        <div style="font-size:10px;margin-top:3px;color:${color};font-weight:700">${pct===0?'Kosong':pct+'%'}</div>
+      </div>`;
+    }
+  }
+  g.innerHTML = html;
+}
+
+// ============== BACKUP & RESTORE ==============
+async function backupData() {
+  showLoading('Menyiapkan backup...');
+  let allBerkas = [];
+  let from = 0;
+  while(true) {
+    const {data} = await sb.from('berkas').select('*').range(from, from+999);
+    if(!data || data.length===0) break;
+    allBerkas = allBerkas.concat(data);
+    if(data.length < 1000) break;
+    from += 1000;
+  }
+  const [t,c,p,pen,pik] = await Promise.all([
+    sb.from('tasks').select('*'),
+    sb.from('claims').select('*'),
+    sb.from('pinjaman').select('*'),
+    sb.from('pensiunan').select('*'),
+    sb.from('pengikatan').select('*')
+  ]);
+  hideLoading();
+  const backup = {
+    tanggal: new Date().toISOString(),
+    versi: '1.0',
+    berkas: allBerkas,
+    tasks: t.data||[],
+    claims: c.data||[],
+    pinjaman: p.data||[],
+    pensiunan: pen.data||[],
+    pengikatan: pik.data||[]
+  };
+  const blob = new Blob([JSON.stringify(backup, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `BRIMEN_backup_${new Date().toLocaleDateString('id-ID').replace(/\//g,'-')}.json`;
+  a.click();
+  toast(`Backup berhasil! ${allBerkas.length} berkas tersimpan 💾`,'success');
+  addLog('Backup', `${allBerkas.length} berkas dibackup`);
+}
+
+function restoreData(input) {
+  const file = input.files[0]; if(!file) return;
+  if(!confirm('Restore akan menambah data dari backup. Lanjutkan?')) return;
+  const reader = new FileReader();
+  reader.onload = async function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      toast('Fitur restore dalam pengembangan. Gunakan SQL Editor Supabase untuk restore manual.','info');
+    } catch(err) { toast('File backup tidak valid!','error'); }
+  };
+  reader.readAsText(file);
+}
+
+// ============== NAVIGATION ==============
+function showPage(page) {
+  // Access control for rakyat
+  if(CURRENT_USER === 'rakyat' && !RAKYAT_ALLOWED_PAGES.includes(page)) {
+    toast('⛔ Akses ditolak! Hubungi King Ozan untuk akses penuh.','error');
+    return;
+  }
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  const map = {
+    dashboard:'Dashboard',tasks:'Tugas & Deadline',
+    'input-berkas':'Input Berkas','berkas-aktif':'Berkas Aktif',
+    jaminan:'Jaminan & Foto','master-brimen':'Master BRIMEN',
+    pensiunan:'Nasabah Pensiunan',claim:'Claim Berkas',mantri:'Mantri & Peminjaman',pengikatan:'Pengikatan Jaminan',log:'Log Aktivitas',settings:'Pengaturan'
+  };
+  document.getElementById('page-title').textContent = map[page] || page;
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if(n.getAttribute('onclick')?.includes(page)) n.classList.add('active');
+  });
+  renderAll();
+}
+
+// ============== DATE ==============
+function updateDate() {
+  const d = new Date();
+  document.getElementById('date-display').textContent = d.toLocaleDateString('id-ID',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+}
+
+// ============== GENERATE NO BERKAS ==============
+function genNoBerkas() {
+  const n = DB.berkasCounter.toString().padStart(4,'0');
+  DB.berkasCounter++;
+  localStorage.setItem('brimen_counter', DB.berkasCounter);
+  return `BRK-${new Date().getFullYear()}-${n}`;
+}
+
+// ============== POPULATE MANTRI SELECTS ==============
+function populateMantriSelects() {
+  ['mantri-baru','pinjam-mantri','pen-mantri','filter-mantri-aktif'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const opts = el.querySelectorAll('option:not(:first-child)');
+    opts.forEach(o => o.remove());
+    DB.mantriList.forEach(m => {
+      const o = document.createElement('option');
+      o.value = m.nama;
+      o.textContent = `${m.nama} (${m.pn})`;
+      el.appendChild(o);
+    });
+  });
+}
+
+// ============== RENDER ALL ==============
+function renderAll() {
+  updateDashboard();
+  renderTasks();
+  renderBerkasAktif();
+  renderJaminan();
+  renderMasterBrimen();
+  renderClaims();
+  renderMantri();
+  renderPensiunan();
+  renderPengikatan();
+  renderLog();
+  populateMantriSelects();
+  updateNoBerkasDisplay();
+}
+
+function updateNoBerkasDisplay() {
+  const el = document.getElementById('no-berkas-display');
+  if(el && !el.value) el.value = `BRK-${new Date().getFullYear()}-${DB.berkasCounter.toString().padStart(4,'0')}`;
+}
+
+// ============== DASHBOARD ==============
+function updateDashboard() {
+  document.getElementById('stat-total-berkas').textContent = DB.berkas.length;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const doneTasks = DB.tasks.filter(t => t.done);
+  const pendingTasks = DB.tasks.filter(t => !t.done);
+  document.getElementById('stat-tugas-selesai').textContent = doneTasks.length;
+  document.getElementById('stat-total-tugas').textContent = DB.tasks.length;
+  document.getElementById('stat-total-count') && (document.getElementById('stat-total-count').textContent = DB.tasks.length);
+
+  const urgent = pendingTasks.filter(t => {
+    const dl = new Date(t.deadline); dl.setHours(0,0,0,0);
+    const diff = Math.ceil((dl - today) / 86400000);
+    return diff <= 2;
+  });
+  document.getElementById('stat-deadline-dekat').textContent = urgent.length;
+  document.getElementById('stat-claim').textContent = DB.claims.filter(c => c.status !== 'Selesai').length;
+
+  // Preview tasks
+  const preview = pendingTasks.slice(0,3);
+  const tg = document.getElementById('dashboard-tasks-preview');
+  if(preview.length === 0) {
+    tg.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="icon">✅</div><div class="title">Semua tugas selesai!</div></div>';
+  } else {
+    tg.innerHTML = preview.map(t => taskCardHTML(t)).join('');
+  }
+
+  // Recent berkas
+  const rb = document.getElementById('recent-berkas-table');
+  const recent = DB.berkas.slice(-5).reverse();
+  rb.innerHTML = recent.length ? recent.map(b => `
+    <tr>
+      <td><span style="font-family:var(--mono);font-size:12px;color:var(--accent)">${b.noBerkas}</span></td>
+      <td>${b.namaDebitur}</td>
+      <td>${b.mantri||'-'}</td>
+      <td><span class="badge badge-green">✓ Aktif</span></td>
+    </tr>`).join('') : '<tr><td colspan="4" style="padding:20px;text-align:center;color:var(--text3)">Belum ada berkas</td></tr>';
+
+  // Claims preview
+  const cp = document.getElementById('dashboard-claims-preview');
+  const activeClaims = DB.claims.filter(c => c.status !== 'Selesai').slice(0,5);
+  cp.innerHTML = activeClaims.length ? activeClaims.map(c => {
+    const hari = daysSince(c.tglClaim);
+    const sla = parseInt(c.sla) || 14;
+    const pct = Math.min((hari/sla)*100, 100);
+    const cls = pct >= 100 ? 'sla-over' : pct >= 70 ? 'sla-warn' : 'sla-ok';
+    return `<tr>
+      <td>${c.namaNasabah||'-'}</td>
+      <td><span style="font-family:var(--mono);font-size:12px">${hari}</span></td>
+      <td><div class="sla-bar"><div class="sla-fill ${cls}" style="width:${pct}%"></div></div><div style="font-size:10px;color:var(--text3);margin-top:2px">${hari}/${sla} hari</div></td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="3" style="padding:20px;text-align:center;color:var(--text3)">Belum ada claim</td></tr>';
+}
+
+function daysSince(dateStr) {
+  const d = new Date(dateStr); d.setHours(0,0,0,0);
+  const today = new Date(); today.setHours(0,0,0,0);
+  return Math.max(0, Math.ceil((today - d) / 86400000));
+}
+function daysUntil(dateStr) {
+  const d = new Date(dateStr); d.setHours(0,0,0,0);
+  const today = new Date(); today.setHours(0,0,0,0);
+  return Math.ceil((d - today) / 86400000);
+}
+
+// ============== TASKS ==============
+let taskFilter = 'all';
+function filterTasks(f, el) {
+  taskFilter = f;
+  document.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderTasks();
+}
+function renderTasks() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  let tasks = [...DB.tasks];
+  if(taskFilter === 'urgent') tasks = tasks.filter(t => { const d = daysUntil(t.deadline); return d <= 2 && !t.done; });
+  else if(taskFilter === 'warning') tasks = tasks.filter(t => { const d = daysUntil(t.deadline); return d > 2 && d <= 5 && !t.done; });
+  else if(taskFilter === 'done') tasks = tasks.filter(t => t.done);
+  
+  const doneC = DB.tasks.filter(t=>t.done).length;
+  const el = document.getElementById('done-count'); if(el) el.textContent = doneC;
+  const el2 = document.getElementById('total-count'); if(el2) el2.textContent = DB.tasks.length;
+  
+  const tg = document.getElementById('task-grid');
+  if(!tg) return;
+  if(tasks.length === 0) {
+    tg.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="icon">📝</div><div class="title">Tidak ada tugas</div></div>';
+    return;
+  }
+  tg.innerHTML = tasks.map(t => taskCardHTML(t)).join('');
+}
+function taskCardHTML(t) {
+  const days = daysUntil(t.deadline);
+  let urgency = t.priority || 'normal';
+  if(days < 0 && !t.done) urgency = 'urgent';
+  else if(days <= 2 && !t.done) urgency = 'urgent';
+  else if(days <= 5 && !t.done) urgency = 'warning';
+  const daysBadge = t.done ? '<span class="badge badge-green">✓ Selesai</span>' :
+    days < 0 ? `<span class="days-badge days-urgent">Terlambat ${Math.abs(days)} hari</span>` :
+    days === 0 ? `<span class="days-badge days-urgent">Hari ini!</span>` :
+    days <= 2 ? `<span class="days-badge days-urgent">${days} hari lagi</span>` :
+    days <= 5 ? `<span class="days-badge days-warn">${days} hari lagi</span>` :
+    `<span class="days-badge days-ok">${days} hari lagi</span>`;
+  return `<div class="task-card ${t.done?'done':urgency}">
+    <div class="task-type" style="color:${urgency==='urgent'?'var(--accent4)':urgency==='warning'?'var(--accent3)':'var(--accent2)'}">${t.type}</div>
+    <div class="task-title">${t.title}</div>
+    <div class="task-desc">${t.desc||'Tidak ada deskripsi'}</div>
+    ${t.syarat ? `<div style="font-size:11px;color:var(--accent3);margin-bottom:8px;padding:6px 8px;background:rgba(245,158,11,.1);border-radius:6px"><b>Syarat:</b> ${t.syarat}</div>` : ''}
+    <div class="task-footer">
+      ${daysBadge}
+      <div style="display:flex;gap:6px;align-items:center">
+        <span style="font-size:11px;color:var(--text3)">${new Date(t.deadline).toLocaleDateString('id-ID',{day:'numeric',month:'short'})}</span>
+        ${!t.done ? `<button class="task-done-btn" onclick="doneTask('${t.id}')">✓ Selesai</button>` : `<button class="task-done-btn" onclick="undoneTask('${t.id}')">↩ Buka</button>`}
+        <button class="task-done-btn" onclick="deleteTask('${t.id}')" style="color:var(--accent4)">🗑</button>
+      </div>
+    </div>
+  </div>`;
+}
+async function doneTask(id) { const {error}=await sb.from('tasks').update({done:true}).eq('id',id); if(!error){await dbLoad();toast('Tugas diselesaikan! ✅','success');} }
+async function undoneTask(id) { const {error}=await sb.from('tasks').update({done:false}).eq('id',id); if(!error) await dbLoad(); }
+async function deleteTask(id) { if(confirm('Hapus tugas ini?')){await sb.from('tasks').delete().eq('id',id);await dbLoad();toast('Tugas dihapus','info');} }
+
+// ============== BERKAS AKTIF ==============
+function renderBerkasAktif(filter='') {
+  const tbl = document.getElementById('berkas-aktif-table'); if(!tbl) return;
+  const mantriF = document.getElementById('filter-mantri-aktif')?.value || '';
+  let data = DB.berkas.filter(b => {
+    const q = filter.toLowerCase();
+    const matchQ = !q || b.noBerkas?.toLowerCase().includes(q) || b.namaDebitur?.toLowerCase().includes(q) || b.norek?.toLowerCase().includes(q) || b.mantri?.toLowerCase().includes(q);
+    const matchM = !mantriF || b.mantri === mantriF;
+    return matchQ && matchM;
+  });
+  const cnt = document.getElementById('count-aktif'); if(cnt) cnt.textContent = data.length;
+  tbl.innerHTML = data.length ? data.map(b => {
+    const pinjam = DB.pinjaman.find(p => p.noBerkas === b.noBerkas && p.status === 'Dipinjam');
+    const statusPinjam = pinjam ? `<div class="mantri-tag"><div class="mantri-dot"></div>${pinjam.mantri}</div>` : '<span class="badge badge-green">Tersedia</span>';
+    return `<tr>
+      <td><span style="font-family:var(--mono);color:var(--accent);font-size:12px">${b.noBerkas}</span></td>
+      <td><span style="font-family:var(--mono);font-size:11px">${b.norek||'-'}</span></td>
+      <td style="font-weight:600">${b.namaDebitur}</td>
+      <td><span style="font-family:var(--mono);font-size:11px;color:var(--text3)">${b.cif||'-'}</span></td>
+      <td><span class="badge badge-blue">${b.jenisJaminan||'-'}</span></td>
+      <td style="font-size:12px;color:var(--text3);font-family:var(--mono)">${b.labelBerkas||`I-${b.lemari||'?'}-${b.rak||'?'}-${b.baris||'?'}`}</td>
+      <td>${b.mantri||'-'}</td>
+      <td>${statusPinjam}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-ghost btn-sm" onclick="viewDetailBerkas('${b.noBerkas}')">Detail</button>
+        <button class="btn btn-ghost btn-sm" onclick="generateQR('${b.noBerkas}','${b.namaDebitur}','${b.labelBerkas||''}')">QR</button>
+      </td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="9" style="padding:20px;text-align:center;color:var(--text3)">Tidak ditemukan</td></tr>';
+}
+function filterBerkasAktif(q) { renderBerkasAktif(q); }
+
+// Search directly from Supabase for better results
+async function searchBerkasSupabase(q) {
+  if(!q || q.length < 2) { renderBerkasAktif(''); return; }
+  showLoading('Mencari...');
+  try {
+    const {data, error} = await sb.from('berkas')
+      .select('*')
+      .or(`nama_debitur.ilike.%${q}%,norek.ilike.%${q}%,no_berkas.ilike.%${q}%,cif.ilike.%${q}%,label_berkas.ilike.%${q}%`)
+      .limit(200);
+    hideLoading();
+    if(error) { toast('Error: '+error.message,'error'); return; }
+    // Render results
+    const tbl = document.getElementById('berkas-aktif-table');
+    const cnt = document.getElementById('count-aktif');
+    if(cnt) cnt.textContent = data.length;
+    if(!data.length) {
+      tbl.innerHTML = '<tr><td colspan="9" style="padding:20px;text-align:center;color:var(--text3)">Tidak ditemukan</td></tr>';
+      return;
+    }
+    tbl.innerHTML = data.map(r => {
+      const b = mapBerkas(r);
+      const pinjam = DB.pinjaman.find(p => p.noBerkas === b.noBerkas && p.status === 'Dipinjam');
+      const statusPinjam = pinjam ? `<div class="mantri-tag"><div class="mantri-dot"></div>${pinjam.mantri}</div>` : '<span class="badge badge-green">Tersedia</span>';
+      return `<tr>
+        <td><span style="font-family:var(--mono);color:var(--accent);font-size:12px">${b.noBerkas}</span></td>
+        <td><span style="font-family:var(--mono);font-size:11px">${b.norek||'-'}</span></td>
+        <td style="font-weight:600">${b.namaDebitur}</td>
+        <td><span style="font-family:var(--mono);font-size:11px;color:var(--text3)">${b.cif||'-'}</span></td>
+        <td><span class="badge badge-blue">${b.jenisJaminan||'-'}</span></td>
+        <td style="font-size:12px;color:var(--text3);font-family:var(--mono)">${b.labelBerkas||'-'}</td>
+        <td>
+          <div style="font-size:13px">${b.mantri||'-'}</div>
+          <div style="font-size:10px;color:var(--text3);font-family:var(--mono)">PN: ${DB.mantriList.find(m=>m.nama===b.mantri)?.pn||'-'}</div>
+        </td>
+        <td>${statusPinjam}</td>
+        <td style="white-space:nowrap">
+        <button class="btn btn-ghost btn-sm" onclick="viewDetailBerkas('${b.noBerkas}')">Detail</button>
+        <button class="btn btn-ghost btn-sm" onclick="generateQR('${b.noBerkas}','${b.namaDebitur}','${b.labelBerkas||''}')">QR</button>
+      </td>
+      </tr>`;
+    }).join('');
+  } catch(e) {
+    hideLoading();
+    toast('Error pencarian: '+e.message,'error');
+  }
+}
+
+// ============== JAMINAN ==============
+function renderJaminan(filter='') {
+  const g = document.getElementById('jaminan-grid'); if(!g) return;
+  const data = DB.berkas.filter(b => !filter || b.namaDebitur?.toLowerCase().includes(filter.toLowerCase()) || b.noBerkas?.toLowerCase().includes(filter.toLowerCase()));
+  if(data.length === 0) {
+    g.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="icon">📸</div><div class="title">Belum ada data jaminan</div></div>';
+    return;
+  }
+  g.innerHTML = data.map(b => `
+    <div class="jaminan-card">
+      <div class="jaminan-photo">
+        ${b.foto ? `<img src="${b.foto}" alt="Jaminan">` : `<div class="no-photo">📷<span>Belum ada foto</span></div>`}
+        <div class="upload-overlay" onclick="uploadFotoJaminan('${b.noBerkas}')"><span>📷 Upload Foto</span></div>
+      </div>
+      <div class="jaminan-info">
+        <div class="jaminan-name">${b.namaDebitur}</div>
+        <div class="jaminan-norek">${b.norek||'-'}</div>
+        <span class="badge badge-purple" style="margin-bottom:6px">${b.jenisJaminan||'Belum ada jaminan'}</span>
+        <div style="font-size:11px;color:var(--text3)">${b.atasan||'-'}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">${b.noBerkas}</div>
+      </div>
+    </div>`).join('');
+}
+function filterJaminan(q) { renderJaminan(q); }
+function uploadFotoJaminan(noBerkas) {
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = 'image/*';
+  input.onchange = async function() {
+    const file = this.files[0]; if(!file) return;
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+      const b = DB.berkas.find(x => x.noBerkas === noBerkas);
+      if(b) {
+        showLoading('Menyimpan foto...');
+        const {error} = await sb.from('berkas').update({foto: e.target.result}).eq('id', b.id);
+        hideLoading();
+        if(!error) { await dbLoad(); toast('Foto jaminan disimpan! 📸','success'); }
+        else toast('Gagal simpan foto: '+error.message,'error');
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+  input.click();
+}
+
+// ============== MASTER BRIMEN ==============
+function renderMasterBrimen(filter='') {
+  const tbl = document.getElementById('master-brimen-table'); if(!tbl) return;
+  const data = DB.berkas.filter(b => !filter || b.namaDebitur?.toLowerCase().includes(filter.toLowerCase()) || b.norek?.toLowerCase().includes(filter.toLowerCase()) || b.noBerkas?.toLowerCase().includes(filter.toLowerCase()));
+  const cnt = document.getElementById('count-master'); if(cnt) cnt.textContent = data.length;
+  tbl.innerHTML = data.length ? data.map(b => `
+    <tr>
+      <td><span style="font-family:var(--mono);color:var(--accent);font-size:12px">${b.noBerkas}</span></td>
+      <td><span style="font-family:var(--mono);font-size:11px">${b.norekLama||b.norek||'-'}</span></td>
+      <td><span style="font-family:var(--mono);font-size:11px;color:${b.norekBaru?'var(--accent2)':'var(--text3)'}">${b.norekBaru||'—'}</span></td>
+      <td style="font-weight:600">${b.namaDebitur}</td>
+      <td><span style="font-family:var(--mono);font-size:11px;color:var(--text3)">${b.cif||'-'}</span></td>
+      <td><span class="badge badge-blue">${b.jenisJaminan||'-'}</span></td>
+      <td style="font-size:11px;font-family:var(--mono);color:var(--text3)">${b.labelBerkas||'-'}</td>
+      <td style="font-size:11px;font-family:var(--mono);color:var(--accent2)">${b.labelJaminan||'-'}</td>
+      <td>${b.mantri||'-'}</td>
+      <td><span class="badge badge-green">Aktif</span></td>
+    </tr>`).join('') : '<tr><td colspan="8" style="padding:20px;text-align:center;color:var(--text3)">Belum ada data</td></tr>';
+}
+function filterMasterBrimen(q) { renderMasterBrimen(q); }
+
+// ============== CLAIMS ==============
+function renderClaims() {
+  const tbl = document.getElementById('claim-table'); if(!tbl) return;
+  if(DB.claims.length === 0) {
+    tbl.innerHTML = '<tr><td colspan="10" style="padding:20px;text-align:center;color:var(--text3)">Belum ada claim</td></tr>';
+    return;
+  }
+  tbl.innerHTML = DB.claims.map((c,i) => {
+    const hari = daysSince(c.tglClaim);
+    const sla = parseInt(c.sla)||14;
+    const pct = Math.min((hari/sla)*100,100);
+    const slaClass = pct>=100?'sla-over':pct>=70?'sla-warn':'sla-ok';
+    const statusBadge = c.status === 'Selesai' ? '<span class="badge badge-green">Selesai</span>' : pct>=100 ? '<span class="badge badge-red">Melebihi SLA</span>' : '<span class="badge badge-yellow">Proses</span>';
+    return `<tr>
+      <td><span style="font-family:var(--mono);font-size:11px">#${(i+1).toString().padStart(3,'0')}</span></td>
+      <td><span style="font-family:var(--mono);font-size:11px">${c.norek||'-'}</span></td>
+      <td><span style="font-family:var(--mono);font-size:11px">${c.noPolis||'-'}</span></td>
+      <td style="font-weight:600">${c.namaNasabah||'-'}</td>
+      <td style="font-size:12px">${new Date(c.tglClaim).toLocaleDateString('id-ID')}</td>
+      <td style="font-family:var(--mono);font-weight:700;color:${pct>=100?'var(--accent4)':pct>=70?'var(--accent3)':'var(--text)'}">${hari}</td>
+      <td style="min-width:100px"><div class="sla-bar"><div class="sla-fill ${slaClass}" style="width:${pct}%"></div></div><div style="font-size:10px;color:var(--text3);margin-top:2px">${hari}/${sla} hari</div></td>
+      <td style="max-width:180px;font-size:11px;color:var(--text2);white-space:normal">${c.syarat||'-'}</td>
+      <td>${statusBadge}</td>
+      <td>
+        ${c.status !== 'Selesai' ? `<button class="btn btn-success btn-sm" onclick="selesaikanClaim(${i})">✓</button>` : ''}
+        <button class="btn btn-ghost btn-sm" onclick="deleteClaim(${i})">🗑</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+async function selesaikanClaim(i) { const c=DB.claims[i]; const {error}=await sb.from('claims').update({status:'Selesai'}).eq('id',c.id); if(!error){await dbLoad();toast('Claim diselesaikan!','success');} }
+async function deleteClaim(i) { const c=DB.claims[i]; if(confirm('Hapus claim ini?')){await sb.from('claims').delete().eq('id',c.id);await dbLoad();} }
+
+// ============== MANTRI ==============
+function renderMantri() {
+  const tbl = document.getElementById('mantri-table'); if(!tbl) return;
+  if(DB.pinjaman.length === 0) {
+    tbl.innerHTML = '<tr><td colspan="7" style="padding:20px;text-align:center;color:var(--text3)">Belum ada peminjaman berkas</td></tr>';
+  } else {
+    tbl.innerHTML = DB.pinjaman.map((p,i) => `
+      <tr>
+        <td><span style="font-family:var(--mono);color:var(--accent);font-size:12px">${p.noBerkas}</span></td>
+        <td style="font-weight:600">${p.namaDebitur||'-'}</td>
+        <td>
+          <div class="mantri-tag"><div class="mantri-dot"></div>${p.mantri}</div>
+          <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:2px">PN: ${DB.mantriList.find(m=>m.nama===p.mantri)?.pn||'-'}</div>
+        </td>
+        <td style="font-size:12px">${new Date(p.tgl).toLocaleDateString('id-ID')}</td>
+        <td><span class="badge badge-purple">${p.keperluan}</span></td>
+        <td><span class="badge ${p.status==='Dipinjam'?'badge-yellow':'badge-green'}">${p.status}</span></td>
+        <td>
+          ${p.status==='Dipinjam'?`<button class="btn btn-success btn-sm" onclick="kembalikanBerkas(${i})">✓ Kembali</button>`:''}
+          <button class="btn btn-ghost btn-sm" onclick="deletePinjaman(${i})">🗑</button>
+        </td>
+      </tr>`).join('');
+  }
+
+  // Mantri status cards
+  const cards = document.getElementById('mantri-status-cards'); if(!cards) return;
+  const countByMantri = {};
+  DB.mantriList.forEach(m => { countByMantri[m.nama] = 0; });
+  DB.pinjaman.filter(p => p.status === 'Dipinjam').forEach(p => { countByMantri[p.mantri] = (countByMantri[p.mantri]||0)+1; });
+  cards.innerHTML = DB.mantriList.map(m => `
+    <div class="mantri-status-card">
+      <div class="mantri-name-h">
+        <span style="width:28px;height:28px;border-radius:6px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:white;flex-shrink:0">${m.nama.charAt(0)}</span>
+        ${m.nama}
+      </div>
+      <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-bottom:8px">PN: ${m.pn}</div>
+      <div class="berkas-count">${countByMantri[m.nama]||0}</div>
+      <div class="berkas-label">berkas sedang dipinjam</div>
+    </div>`).join('');
+}
+async function kembalikanBerkas(i) { const p=DB.pinjaman[i]; const {error}=await sb.from('pinjaman').update({status:'Dikembalikan'}).eq('id',p.id); if(!error){await dbLoad();toast('Berkas dikembalikan ✅','success');} }
+async function deletePinjaman(i) { const p=DB.pinjaman[i]; if(confirm('Hapus data peminjaman?')){await sb.from('pinjaman').delete().eq('id',p.id);await dbLoad();} }
+
+// ============== PENSIUNAN ==============
+function renderPensiunan(filter='') {
+  const list = document.getElementById('pensiunan-list'); if(!list) return;
+  const data = DB.pensiunan.filter(p => !filter || p.nama?.toLowerCase().includes(filter.toLowerCase()) || p.norek?.toLowerCase().includes(filter.toLowerCase()));
+  if(data.length === 0) {
+    list.innerHTML = '<div class="empty-state"><div class="icon">👴</div><div class="title">Belum ada data nasabah pensiunan</div></div>';
+    return;
+  }
+  list.innerHTML = data.map((p,i) => `
+    <div class="pensiunan-card">
+      <div class="pensiunan-avatar">${p.nama?.charAt(0)||'P'}</div>
+      <div class="pensiunan-info">
+        <div class="pensiunan-name">${p.nama}</div>
+        <div class="pensiunan-meta">
+          <span>📋 ${p.norek||'-'}</span>
+          <span>🏛️ ${p.instansi||'-'}</span>
+          <span>💰 Rp ${parseInt(p.nominal||0).toLocaleString('id-ID')}</span>
+          <span>👤 ${p.mantri||'-'}</span>
+          <span>⏱ JW: ${p.jw||'-'} bln</span>
+        </div>
+        ${p.catatan?`<div style="font-size:11px;color:var(--text3);margin-top:4px">${p.catatan}</div>`:''}
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="deletePensiunan(${i})">🗑</button>
+    </div>`).join('');
+}
+function filterPensiunan(q) { renderPensiunan(q); }
+async function deletePensiunan(i) { const p=DB.pensiunan[i]; if(confirm('Hapus data pensiunan?')){await sb.from('pensiunan').delete().eq('id',p.id);await dbLoad();toast('Data dihapus','info');} }
+
+// ============== FORM ACTIONS ==============
+
+// Input Berkas Baru
+async function simpanBerkasBaru() {
+  const norek = document.getElementById('norek-baru').value.trim();
+  const nama = document.getElementById('nama-debitur-baru').value.trim();
+  if(!nama || !norek) { toast('Nama debitur dan No Rekening wajib diisi!','error'); return; }
+  const noBerkas = genNoBerkas();
+  const foto = document.getElementById('preview-img-baru')?.src || null;
+  showLoading('Menyimpan berkas...');
+  const lemari = document.getElementById('lemari-baru').value;
+  const rak = document.getElementById('rak-baru').value;
+  const baris = document.getElementById('baris-baru').value;
+  const lemariJ = document.getElementById('lemari-jaminan').value;
+  const rakJ = document.getElementById('rak-jaminan').value;
+  const barisJ = document.getElementById('baris-jaminan').value;
+  const label = document.getElementById('label-berkas').value;
+  const labelJ = document.getElementById('label-jaminan').value;
+
+  const {error} = await sb.from('berkas').insert({
+    no_berkas: noBerkas, norek, norek_lama: norek, norek_baru: null,
+    nama_debitur: nama,
+    cif: document.getElementById('cif-baru').value,
+    mantri: document.getElementById('mantri-baru').value,
+    tgl_realisasi: document.getElementById('tgl-realisasi').value,
+    jenis_jaminan: document.getElementById('jenis-jaminan').value,
+    no_dokumen: document.getElementById('no-dokumen').value,
+    atas_nama: document.getElementById('atas-nama').value,
+    ruang: document.getElementById('ruang-baru').value || 'I',
+    lemari, rak, baris,
+    label_berkas: label,
+    lemari_jaminan: lemariJ,
+    rak_jaminan: rakJ,
+    baris_jaminan: barisJ,
+    label_jaminan: labelJ,
+    foto: (foto && foto.startsWith('data:')) ? foto : null
+  });
+  hideLoading();
+  if(error) { toast('Gagal simpan: '+error.message,'error'); return; }
+  await dbLoad();
+  resetFormBaru();
+  toast(`Berkas ${noBerkas} berhasil disimpan! 📂`,'success');
+  addLog('Input Berkas Baru', `${noBerkas} - ${nama}`);
+}
+
+function resetFormBaru() {
+  ['norek-baru','nama-debitur-baru','cif-baru','tgl-realisasi','jenis-jaminan','no-dokumen','atas-nama','ruang-baru','lemari-baru','rak-baris-baru'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('mantri-baru').value='';
+  document.getElementById('lemari-baru').value='';
+  document.getElementById('rak-baru').value='';
+  document.getElementById('baris-baru').value='';
+  document.getElementById('label-berkas').value='';
+  document.getElementById('lemari-jaminan').value='';
+  document.getElementById('rak-jaminan').value='';
+  document.getElementById('baris-jaminan').value='';
+  document.getElementById('label-jaminan').value='';
+  document.getElementById('slot-berkas-info').style.display='none';
+  document.getElementById('slot-jaminan-info').style.display='none';
+  document.getElementById('no-berkas-display').value = `BRK-${new Date().getFullYear()}-${DB.berkasCounter.toString().padStart(4,'0')}`;
+  const prev = document.getElementById('preview-foto-baru'); if(prev) prev.style.display='none';
+}
+
+// Berkas Lama
+function cariDataLama(q) {
+  const sel = document.getElementById('pilih-berkas-lama');
+  sel.innerHTML = '<option value="">-- Pilih --</option>';
+  if(!q || q.length < 1) return;
+  const found = DB.berkas.filter(b => b.namaDebitur?.toLowerCase().includes(q.toLowerCase()) || b.norek?.includes(q) || b.cif?.toLowerCase().includes(q.toLowerCase()));
+  found.forEach(b => {
+    const o = document.createElement('option');
+    o.value = b.noBerkas;
+    o.textContent = `${b.namaDebitur} | ${b.norek} | ${b.noBerkas}`;
+    sel.appendChild(o);
+  });
+}
+
+function pilihDataLama(noBerkas) {
+  const detail = document.getElementById('berkas-lama-detail');
+  if(!noBerkas) { detail.style.display='none'; return; }
+  const b = DB.berkas.find(x => x.noBerkas === noBerkas);
+  if(!b) return;
+  detail.style.display='block';
+  document.getElementById('berkas-lama-info').innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+      <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px">No Berkas</div><div style="font-weight:700;color:var(--accent);font-family:var(--mono)">${b.noBerkas}</div></div>
+      <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px">Nama Debitur</div><div style="font-weight:600">${b.namaDebitur}</div></div>
+      <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px">No Rek Lama</div><div style="font-family:var(--mono);font-size:12px">${b.norekLama||b.norek||'-'}</div></div>
+      <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px">Jaminan</div><div>${b.jenisJaminan||'-'}</div></div>
+      <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px">Mantri</div><div>${b.mantri||'-'}</div></div>
+      <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px">No Rek Baru Saat Ini</div><div style="font-family:var(--mono);color:var(--accent2);font-size:12px">${b.norekBaru||'Belum ada'}</div></div>
+    </div>`;
+}
+
+async function updateBerkasLama() {
+  const noBerkas = document.getElementById('pilih-berkas-lama').value;
+  const norekBaru = document.getElementById('norek-baru-lama').value.trim();
+  if(!noBerkas || !norekBaru) { toast('Pilih berkas dan isi No Rekening baru!','error'); return; }
+  const b = DB.berkas.find(x => x.noBerkas === noBerkas);
+  if(!b) return;
+  showLoading('Mengupdate norek...');
+  const {error} = await sb.from('berkas').update({ norek_baru: norekBaru }).eq('id', b.id);
+  hideLoading();
+  if(error) { toast('Gagal update: '+error.message,'error'); return; }
+  await dbLoad();
+  toast(`No Rekening baru untuk ${b.namaDebitur} berhasil diupdate! ✅`,'success');
+  document.getElementById('berkas-lama-detail').style.display='none';
+  document.getElementById('pilih-berkas-lama').value='';
+  document.getElementById('cari-berkas-lama').value='';
+}
+
+// ============== CLAIM MODAL ==============
+function autoFillClaim(norek) {
+  const b = DB.berkas.find(x => x.norek === norek || x.norekBaru === norek);
+  if(b) document.getElementById('claim-nama').value = b.namaDebitur;
+}
+
+async function simpanClaim() {
+  const norek = document.getElementById('claim-norek').value.trim();
+  if(!norek) { toast('No Rekening wajib diisi!','error'); return; }
+  showLoading('Membuat claim...');
+  const {error} = await sb.from('claims').insert({
+    norek, no_polis: document.getElementById('claim-nopolis').value,
+    nama_nasabah: document.getElementById('claim-nama').value,
+    sla: parseInt(document.getElementById('claim-sla').value)||14,
+    jenis: document.getElementById('claim-jenis').value,
+    syarat: document.getElementById('claim-syarat').value,
+    tgl_claim: new Date().toISOString().split('T')[0],
+    status: 'Proses'
+  });
+  hideLoading();
+  if(error) { toast('Gagal simpan claim: '+error.message,'error'); return; }
+  await dbLoad();
+  closeModal('modal-claim');
+  toast('Claim berhasil dibuat! 🔖','success');
+  ['claim-norek','claim-nopolis','claim-nama','claim-syarat'].forEach(id => document.getElementById(id).value='');
+}
+
+// ============== TASK MODAL ==============
+async function simpanTask() {
+  const title = document.getElementById('task-title').value.trim();
+  const deadline = document.getElementById('task-deadline').value;
+  if(!title || !deadline) { toast('Judul dan deadline wajib diisi!','error'); return; }
+  showLoading('Menyimpan tugas...');
+  const {error} = await sb.from('tasks').insert({
+    title, deadline,
+    description: document.getElementById('task-desc').value,
+    type: document.getElementById('task-type').value,
+    priority: document.getElementById('task-priority').value,
+    syarat: document.getElementById('task-syarat').value,
+    done: false
+  });
+  hideLoading();
+  if(error) { toast('Gagal simpan: '+error.message,'error'); return; }
+  await dbLoad();
+  closeModal('modal-task');
+  toast('Tugas ditambahkan! 📝','success');
+  // Telegram notif
+  const tTitle = document.getElementById('task-title').value || title;
+  const tDeadline = document.getElementById('task-deadline').value || deadline;
+  sendTelegram(`📋 <b>Tugas Baru Ditambahkan</b>\n\n📌 ${title}\n📅 Deadline: ${new Date(deadline).toLocaleDateString('id-ID')}\n🏷️ Jenis: ${document.getElementById('task-type').value}\n\n<i>BRIMEN Dashboard — Unit Pagelaran</i>`);
+  addLog('Tambah Tugas', title);
+  ['task-title','task-desc','task-syarat','task-deadline'].forEach(id => document.getElementById(id).value='');
+}
+
+// ============== PINJAM MODAL ==============
+function cariUntukPinjam(q) {
+  const sel = document.getElementById('pinjam-berkas');
+  sel.innerHTML = '<option value="">-- Pilih atau ketik nama --</option>';
+  const data = q && q.length >= 1
+    ? DB.berkas.filter(b => b.namaDebitur?.toLowerCase().includes(q.toLowerCase()) || b.norek?.includes(q) || b.noBerkas?.includes(q))
+    : DB.berkas.slice(0, 50);
+  if(data.length === 0) {
+    const o = document.createElement('option');
+    o.disabled = true;
+    o.textContent = '-- Tidak ada berkas ditemukan --';
+    sel.appendChild(o);
+    return;
+  }
+  data.forEach(b => {
+    const o = document.createElement('option');
+    o.value = b.noBerkas;
+    o.textContent = `${b.namaDebitur} | ${b.noBerkas}`;
+    sel.appendChild(o);
+  });
+}
+
+async function simpanPinjaman() {
+  const noBerkas = document.getElementById('pinjam-berkas').value;
+  const mantri = document.getElementById('pinjam-mantri').value;
+  if(!noBerkas || !mantri) { toast('Pilih berkas dan mantri!','error'); return; }
+  const b = DB.berkas.find(x => x.noBerkas === noBerkas);
+  showLoading('Mencatat peminjaman...');
+  const {error} = await sb.from('pinjaman').insert({
+    no_berkas: noBerkas, mantri,
+    nama_debitur: b?.namaDebitur||'-',
+    tgl: document.getElementById('pinjam-tgl').value || new Date().toISOString().split('T')[0],
+    keperluan: document.getElementById('pinjam-keperluan').value,
+    catatan: document.getElementById('pinjam-catatan').value,
+    status: 'Dipinjam'
+  });
+  hideLoading();
+  if(error) { toast('Gagal simpan: '+error.message,'error'); return; }
+  await dbLoad();
+  closeModal('modal-pinjam');
+  toast(`Peminjaman berkas oleh ${mantri} dicatat! 📤`,'success');
+}
+
+// ============== PENSIUNAN MODAL ==============
+async function simpanPensiunan() {
+  const nama = document.getElementById('pen-nama').value.trim();
+  if(!nama) { toast('Nama wajib diisi!','error'); return; }
+  showLoading('Menyimpan data pensiunan...');
+  const {error} = await sb.from('pensiunan').insert({
+    nama, ktp: document.getElementById('pen-ktp').value,
+    norek: document.getElementById('pen-norek').value,
+    instansi: document.getElementById('pen-instansi').value,
+    mantri: document.getElementById('pen-mantri').value,
+    nominal: parseInt(document.getElementById('pen-nominal').value)||0,
+    tgl: document.getElementById('pen-tgl').value,
+    jw: parseInt(document.getElementById('pen-jw').value)||0,
+    catatan: document.getElementById('pen-catatan').value
+  });
+  hideLoading();
+  if(error) { toast('Gagal simpan: '+error.message,'error'); return; }
+  await dbLoad();
+  closeModal('modal-pensiunan');
+  toast(`Data pensiunan ${nama} disimpan! 👴`,'success');
+  ['pen-nama','pen-ktp','pen-norek','pen-instansi','pen-nominal','pen-jw','pen-catatan'].forEach(id => document.getElementById(id).value='');
+}
+
+// ============== MODAL HELPERS ==============
+function openTaskModal() { document.getElementById('modal-task').classList.add('open'); }
+function openClaimModal() { document.getElementById('modal-claim').classList.add('open'); }
+function openPinjamModal() {
+  document.getElementById('modal-pinjam').classList.add('open');
+  const el = document.getElementById('pinjam-tgl');
+  if(el) el.value = new Date().toISOString().split('T')[0];
+  // Auto-populate berkas list
+  cariUntukPinjam('');
+}
+function openPensiunanModal() { document.getElementById('modal-pensiunan').classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// Close global search on outside click
+document.addEventListener('click', function(e) {
+  const wrap = document.getElementById('global-search-results');
+  const input = document.getElementById('global-search-input');
+  if(wrap && input && !wrap.contains(e.target) && e.target !== input) {
+    wrap.style.display='none';
+  }
+});
+
+// Close on overlay click
+document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('click', function(e) { if(e.target===this) this.classList.remove('open'); }));
+
+// ============== TABS BERKAS ==============
+function switchBerkasTab(tab, el) {
+  document.getElementById('tab-baru').style.display = tab==='baru'?'block':'none';
+  document.getElementById('tab-lama').style.display = tab==='lama'?'block':'none';
+  document.querySelectorAll('#page-input-berkas .tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ============== FOTO PREVIEW ==============
+function previewFoto(input, previewId) {
+  const file = input.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const prev = document.getElementById(previewId);
+    const img = document.getElementById('preview-img-baru');
+    if(prev && img) { img.src = e.target.result; prev.style.display='block'; }
+  };
+  reader.readAsDataURL(file);
+}
+
+// ============== TOAST ==============
+function toast(msg, type='info') {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.innerHTML = `<span>${type==='success'?'✅':type==='error'?'❌':'ℹ️'}</span> ${msg}`;
+  c.appendChild(t);
+  setTimeout(() => { t.style.opacity='0'; t.style.transform='translateX(100px)'; t.style.transition='.3s'; setTimeout(()=>t.remove(),300); }, 3000);
+}
+
+// ============== NOTIF ==============
+function toggleNotif() {
+  const urgent = DB.tasks.filter(t => !t.done && daysUntil(t.deadline) <= 1).length;
+  if(urgent > 0) toast(`⏰ Ada ${urgent} tugas dengan deadline hari ini/besok!`,'error');
+  else toast('Tidak ada notifikasi mendesak','info');
+  document.getElementById('notif-dot').style.display='none';
+}
+
+// ============== VIEW DETAIL ==============
+async function viewDetailBerkas(noBerkas) {
+  // Try local cache first, then fetch from Supabase
+  let b = DB.berkas.find(x => x.noBerkas === noBerkas);
+  if(!b) {
+    const {data} = await sb.from('berkas').select('*').eq('no_berkas', noBerkas).single();
+    if(data) b = mapBerkas(data);
+  }
+  if(!b) { toast('Data tidak ditemukan','error'); return; }
+
+  // Create detail modal
+  const existing = document.getElementById('modal-detail-berkas');
+  if(existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'modal-detail-berkas';
+  modal.className = 'modal-overlay open';
+  modal.innerHTML = `
+    <div class="modal" style="width:680px">
+      <div class="modal-header">
+        <div class="modal-title">📂 Detail Berkas — ${b.noBerkas}</div>
+        <button class="modal-close" onclick="document.getElementById('modal-detail-berkas').remove()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div class="form-section" style="margin:0">
+            <div class="form-section-title">👤 Data Nasabah</div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              ${detailRow('Nama Debitur', b.namaDebitur, true)}
+              ${detailRow('No Rekening', b.norek, false, 'mono')}
+              ${detailRow('No Rek Baru', b.norekBaru||'Belum ada', false, b.norekBaru?'mono accent2':'')}
+              ${detailRow('CIF', b.cif)}
+              ${detailRow('Mantri', b.mantri)}
+              ${detailRow('Tgl Realisasi', b.tglRealisasi)}
+            </div>
+          </div>
+          <div class="form-section" style="margin:0">
+            <div class="form-section-title">📦 Lokasi Berkas</div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              ${detailRow('Label Berkas', b.labelBerkas||`I-${b.lemari||'?'}-${b.rak||'?'}-${b.baris||'?'}`, false, 'mono accent')}
+              ${detailRow('Ruang', b.ruang||'I')}
+              ${detailRow('Lemari', b.lemari||'-')}
+              ${detailRow('Rak', b.rak||'-')}
+              ${detailRow('Baris', b.baris||'-')}
+            </div>
+          </div>
+          <div class="form-section" style="margin:0">
+            <div class="form-section-title">🏠 Data Jaminan</div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              ${detailRow('Jenis Jaminan', b.jenisJaminan||'-')}
+              ${detailRow('No & Tahun', b.noDokumen||'-')}
+              ${detailRow('Atas Nama', b.atasan||'-')}
+              ${detailRow('Label Jaminan', b.labelJaminan||'-', false, 'mono accent2')}
+              ${detailRow('Lemari Jaminan', b.lemariJaminan||'-')}
+              ${detailRow('Rak Jaminan', b.rakJaminan||'-')}
+            </div>
+          </div>
+          <div class="form-section" style="margin:0">
+            <div class="form-section-title">📸 Foto Jaminan</div>
+            ${b.foto ? `<img src="${b.foto}" style="width:100%;border-radius:8px;border:1px solid var(--border);cursor:pointer" onclick="showFotoFull('${b.foto}')">
+            <div style="font-size:11px;color:var(--text3);margin-top:6px;text-align:center">Klik foto untuk perbesar</div>` 
+            : `<div style="height:120px;background:var(--surface2);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;color:var(--text3)"><span style="font-size:28px">📷</span><span style="font-size:12px">Belum ada foto</span></div>
+            <button class="btn btn-ghost btn-sm" style="margin-top:8px;width:100%" onclick="document.getElementById('modal-detail-berkas').remove();uploadFotoJaminan('${b.noBerkas}')">📷 Upload Foto</button>`}
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="document.getElementById('modal-detail-berkas').remove()">Tutup</button>
+        ${CURRENT_USER==='king'?`<button class="btn btn-primary" onclick="document.getElementById('modal-detail-berkas').remove();editBerkas('${b.noBerkas}')">✏️ Edit</button>`:''}
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', function(e){ if(e.target===this) this.remove(); });
+}
+
+function detailRow(label, value, bold=false, style='') {
+  const colorMap = {'mono':'font-family:var(--mono);font-size:12px','accent':'color:var(--accent)','accent2':'color:var(--accent2)','mono accent':'font-family:var(--mono);font-size:12px;color:var(--accent)','mono accent2':'font-family:var(--mono);font-size:12px;color:var(--accent2)'};
+  const s = colorMap[style]||'';
+  return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)">
+    <span style="font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.5px">${label}</span>
+    <span style="${s};${bold?'font-weight:700':'font-weight:500'}">${value||'-'}</span>
+  </div>`;
+}
+
+async function editBerkas(noBerkas) {
+  // Placeholder - navigate to input berkas lama with prefilled data
+  showPage('input-berkas');
+  setTimeout(() => {
+    document.querySelector('#page-input-berkas .tab:nth-child(2)').click();
+    document.getElementById('cari-berkas-lama').value = noBerkas;
+    cariDataLama(noBerkas);
+  }, 300);
+}
+
+// ============== CHECK NOTIF ON LOAD ==============
+function checkNotifDot() {
+  const urgent = DB.tasks.filter(t => !t.done && daysUntil(t.deadline) <= 2).length;
+  document.getElementById('notif-dot').style.display = urgent > 0 ? 'block' : 'none';
+}
+
+// ============== USER SYSTEM ==============
+// KING = full access, RAKYAT = limited (tugas, deadline, cek berkas only)
+let CURRENT_USER = null; // 'king' or 'rakyat'
+
+const USERS = {
+  'siapkingozan24!': 'king',
+  'rakyat123': 'rakyat'
+};
+
+const RAKYAT_ALLOWED_PAGES = ['dashboard','tasks','berkas-aktif','jaminan'];
+const RAKYAT_HIDDEN_NAV = ['input-berkas','master-brimen','pensiunan','claim','mantri','pengikatan'];
+
+function checkPassword() {
+  const val = document.getElementById('lock-input').value;
+  if(USERS[val]) {
+    CURRENT_USER = USERS[val];
+    document.getElementById('lock-screen').style.display = 'none';
+    applyUserAccess();
+    if(CURRENT_USER === 'king') {
+      document.getElementById('welcome-splash').style.display = 'flex';
+      setTimeout(() => { document.getElementById('welcome-splash').style.display = 'none'; }, 3500);
+    } else {
+      // Rakyat welcome
+      toast('Selamat datang! Akses terbatas untuk user Rakyat 👤','info');
+    }
+  } else {
+    const err = document.getElementById('lock-error');
+    err.style.display = 'block';
+    document.getElementById('lock-input').value = '';
+    document.getElementById('lock-input').style.borderColor = 'var(--accent4)';
+    setTimeout(() => {
+      err.style.display = 'none';
+      document.getElementById('lock-input').style.borderColor = 'var(--border)';
+    }, 2000);
+  }
+}
+
+function applyUserAccess() {
+  if(CURRENT_USER === 'rakyat') {
+    // Hide restricted nav items
+    document.querySelectorAll('.nav-item').forEach(el => {
+      const onclick = el.getAttribute('onclick') || '';
+      const isHidden = RAKYAT_HIDDEN_NAV.some(p => onclick.includes(`'${p}'`));
+      if(isHidden) el.style.display = 'none';
+    });
+    // Update user badge
+    document.getElementById('user-name-display').textContent = 'Rakyat';
+    // Show rakyat badge
+    const badge = document.createElement('div');
+    badge.style.cssText = 'margin-top:6px;text-align:center;font-size:10px;padding:3px 8px;background:rgba(245,158,11,.2);color:var(--accent3);border-radius:6px;font-weight:600';
+    badge.textContent = '👤 Akses Terbatas';
+    document.querySelector('.sidebar-footer').appendChild(badge);
+  } else {
+    document.getElementById('user-name-display').textContent = 'King Ozan';
+    // Show king badge
+    const badge = document.createElement('div');
+    badge.style.cssText = 'margin-top:6px;text-align:center;font-size:10px;padding:3px 8px;background:rgba(59,130,246,.2);color:var(--accent);border-radius:6px;font-weight:600';
+    badge.textContent = '👑 Full Access';
+    document.querySelector('.sidebar-footer').appendChild(badge);
+  }
+}
+
+// Override showPage for rakyat access control
+const _origShowPage = showPage;
+
+// ============== PENGIKATAN JAMINAN ==============
+function openPengikatanModal() {
+  // Populate diambil oleh
+  const sel = document.getElementById('pik-diambil-oleh');
+  sel.innerHTML = '<option value="">-- Pilih --</option>';
+  DB.mantriList.forEach(m => {
+    const o = document.createElement('option');
+    o.value = m.nama; o.textContent = `${m.nama} (${m.pn})`; sel.appendChild(o);
+  });
+  ['CS','Kepala Unit'].forEach(r => {
+    const o = document.createElement('option'); o.value=r; o.textContent=r; sel.appendChild(o);
+  });
+  document.getElementById('modal-pengikatan').classList.add('open');
+  // Default dates
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('pik-tgl-kirim').value = today;
+}
+
+function previewPikFoto(input) {
+  const file = input.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    document.getElementById('pik-foto-img').src = e.target.result;
+    document.getElementById('pik-foto-preview').style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function simpanPengikatan() {
+  const nama = document.getElementById('pik-nama').value.trim();
+  if(!nama) { toast('Nama debitur wajib diisi!','error'); return; }
+  const foto = document.getElementById('pik-foto-img')?.src || null;
+  showLoading('Menyimpan pengikatan...');
+  const {error} = await sb.from('pengikatan').insert({
+    nama_debitur: nama,
+    norek: document.getElementById('pik-norek').value,
+    nominal: parseInt(document.getElementById('pik-nominal').value)||0,
+    jenis_jaminan: document.getElementById('pik-jenis-jaminan').value,
+    notaris: document.getElementById('pik-notaris').value,
+    tgl_kirim: document.getElementById('pik-tgl-kirim').value,
+    diambil_oleh: document.getElementById('pik-diambil-oleh').value,
+    lokasi: document.getElementById('pik-lokasi').value,
+    ket_lokasi: document.getElementById('pik-ket-lokasi').value,
+    deadline: document.getElementById('pik-deadline').value,
+    tgl_kembali: document.getElementById('pik-tgl-kembali').value,
+    foto: (foto && foto.startsWith('data:')) ? foto : null,
+    catatan: document.getElementById('pik-catatan').value,
+    status: 'Proses'
+  });
+  hideLoading();
+  if(error) { toast('Gagal simpan: '+error.message,'error'); return; }
+  await dbLoad();
+  closeModal('modal-pengikatan');
+  toast(`Pengikatan ${nama} disimpan! ⚖️`,'success');
+  sendTelegram(`⚖️ <b>Pengikatan Jaminan Baru</b>\n\n👤 ${nama}\n💰 Rp ${parseInt(document.getElementById('pik-nominal').value||0).toLocaleString('id-ID')}\n🏛️ ${document.getElementById('pik-notaris').value||'-'}\n📅 Deadline: ${new Date(document.getElementById('pik-deadline').value).toLocaleDateString('id-ID')}\n\n<i>BRIMEN Dashboard — Unit Pagelaran</i>`);
+  addLog('Pengikatan Baru', nama);
+  ['pik-nama','pik-norek','pik-nominal','pik-notaris','pik-ket-lokasi','pik-catatan','pik-deadline','pik-tgl-kembali'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('pik-foto-preview').style.display='none';
+}
+
+async function selesaikanPengikatan(id) {
+  const {error} = await sb.from('pengikatan').update({status:'Selesai'}).eq('id',id);
+  if(!error){await dbLoad();toast('Pengikatan selesai! ✅','success');}
+}
+async function deletePengikatan(id) {
+  if(confirm('Hapus data pengikatan ini?')){
+    await sb.from('pengikatan').delete().eq('id',id);
+    await dbLoad(); toast('Data dihapus','info');
+  }
+}
+
+function filterPengikatan(q) { renderPengikatan(q); }
+
+function renderPengikatan(filter='') {
+  const tbl = document.getElementById('pengikatan-table'); if(!tbl) return;
+  const statusF = document.getElementById('filter-status-pengikatan')?.value||'';
+  let data = (DB.pengikatan||[]).filter(p => {
+    const q = filter.toLowerCase();
+    const matchQ = !q || p.namaDebitur?.toLowerCase().includes(q) || p.notaris?.toLowerCase().includes(q);
+    const matchS = !statusF || p.status===statusF;
+    return matchQ && matchS;
+  });
+  const cnt = document.getElementById('count-pengikatan'); if(cnt) cnt.textContent = data.length;
+  if(data.length===0){
+    tbl.innerHTML='<tr><td colspan="11" style="padding:20px;text-align:center;color:var(--text3)">Belum ada data pengikatan</td></tr>';
+    return;
+  }
+  tbl.innerHTML = data.map(p => {
+    const days = daysUntil(p.deadline);
+    const daysBadge = !p.deadline ? '<span class="badge badge-gray">-</span>' :
+      p.status==='Selesai' ? '<span class="badge badge-green">Selesai</span>' :
+      days<0 ? `<span class="badge badge-red">Terlambat ${Math.abs(days)}h</span>` :
+      days===0 ? '<span class="badge badge-red">Hari ini!</span>' :
+      days<=3 ? `<span class="badge badge-yellow">${days} hari</span>` :
+      `<span class="badge badge-blue">${days} hari</span>`;
+    const statusBadge = p.status==='Selesai' ? '<span class="badge badge-green">✅ Selesai</span>' :
+      p.lokasi==='Di Notaris' ? '<span class="badge badge-purple">⚖️ Di Notaris</span>' :
+      '<span class="badge badge-yellow">🔄 Proses</span>';
+    return `<tr>
+      <td style="font-weight:600">${p.namaDebitur}</td>
+      <td style="font-family:var(--mono);color:var(--accent2)">Rp ${parseInt(p.nominal||0).toLocaleString('id-ID')}</td>
+      <td>${p.notaris||'-'}</td>
+      <td style="font-size:12px">${p.tglKirim ? new Date(p.tglKirim).toLocaleDateString('id-ID') : '-'}</td>
+      <td>
+        <div>${p.diambilOleh||'-'}</div>
+        <div style="font-size:10px;color:var(--text3)">${p.lokasi||''}</div>
+        ${p.ketLokasi?`<div style="font-size:10px;color:var(--accent3)">${p.ketLokasi}</div>`:''}
+      </td>
+      <td><span class="badge badge-purple">${p.lokasi||'-'}</span></td>
+      <td style="font-size:12px">${p.deadline ? new Date(p.deadline).toLocaleDateString('id-ID') : '-'}</td>
+      <td>${daysBadge}</td>
+      <td style="text-align:center">${p.foto?`<img src="${p.foto}" style="width:48px;height:48px;object-fit:cover;border-radius:6px;border:1px solid var(--border);cursor:pointer" onclick="showFotoFull('${p.foto}')">` : '<span style="color:var(--text3);font-size:11px">Tidak ada</span>'}</td>
+      <td>${statusBadge}</td>
+      <td style="white-space:nowrap">
+        ${p.status!=='Selesai'?`<button class="btn btn-success btn-sm" onclick="selesaikanPengikatan('${p.id}')">✓</button> `:''}
+        <button class="btn btn-ghost btn-sm" onclick="deletePengikatan('${p.id}')">🗑</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function showFotoFull(src) {
+  const d = document.createElement('div');
+  d.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:500;display:flex;align-items:center;justify-content:center;cursor:pointer';
+  d.innerHTML=`<img src="${src}" style="max-width:90vw;max-height:90vh;border-radius:12px;box-shadow:0 0 40px rgba(0,0,0,.5)">`;
+  d.onclick=()=>d.remove();
+  document.body.appendChild(d);
+}
+
+// ============== SIDEBAR MOBILE ==============
+function toggleSidebar() {
+  const sidebar = document.querySelector('.sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  sidebar.classList.toggle('open');
+  overlay.classList.toggle('show');
+}
+// Close sidebar when nav item clicked on mobile
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', () => {
+      if(window.innerWidth <= 768) {
+        document.querySelector('.sidebar').classList.remove('open');
+        document.getElementById('sidebar-overlay').classList.remove('show');
+      }
+    });
+  });
+});
+
+// ============== TELEGRAM CONFIG ==============
+const TG = {
+  token: localStorage.getItem('tg_token') || '',
+  chatId: localStorage.getItem('tg_chat_id') || '',
+  enabled: localStorage.getItem('tg_enabled') === 'true'
+};
+
+async function sendTelegram(msg) {
+  if(!TG.enabled || !TG.token || !TG.chatId) return;
+  try {
+    await fetch(`https://api.telegram.org/bot${TG.token}/sendMessage`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        chat_id: TG.chatId,
+        text: msg,
+        parse_mode: 'HTML'
+      })
+    });
+  } catch(e) { console.log('Telegram error:', e); }
+}
+
+function saveTelegramConfig() {
+  const token = document.getElementById('tg-token-input').value.trim();
+  const chatId = document.getElementById('tg-chatid-input').value.trim();
+  const enabled = document.getElementById('tg-enabled').checked;
+  TG.token = token; TG.chatId = chatId; TG.enabled = enabled;
+  localStorage.setItem('tg_token', token);
+  localStorage.setItem('tg_chat_id', chatId);
+  localStorage.setItem('tg_enabled', enabled);
+  toast('Pengaturan Telegram disimpan! 📱','success');
+  // Test send
+  if(enabled && token && chatId) {
+    sendTelegram('✅ <b>BRIMEN Dashboard</b>\nKoneksi Telegram berhasil! Bot siap mengirim notifikasi.');
+    toast('Pesan test dikirim ke Telegram!','success');
+  }
+}
+
+async function testTelegram() {
+  if(!TG.token || !TG.chatId) { toast('Isi token dan chat ID dulu!','error'); return; }
+  await sendTelegram('🔔 <b>Test Notifikasi BRIMEN</b>\n\nJika pesan ini muncul, koneksi Telegram berhasil! ✅\n\n<i>Unit Pagelaran — ' + new Date().toLocaleString('id-ID') + '</i>');
+  toast('Pesan test dikirim! Cek Telegram kamu','success');
+}
+
+// ============== NOTIF SCHEDULER ==============
+async function checkDeadlineNotifs() {
+  if(!TG.enabled || !TG.token || !TG.chatId) return;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const notifKey = 'last_notif_' + today.toISOString().split('T')[0];
+  if(localStorage.getItem(notifKey)) return; // Sudah kirim hari ini
+
+  const urgent = DB.tasks.filter(t => !t.done && t.deadline);
+  let msgs = [];
+
+  urgent.forEach(t => {
+    const d = daysUntil(t.deadline);
+    if(d === 1) msgs.push(`⚠️ <b>DEADLINE BESOK!</b>\n📋 ${t.title}\n🗓 ${new Date(t.deadline).toLocaleDateString('id-ID')}\nJenis: ${t.type}`);
+    else if(d === 3) msgs.push(`📅 <b>Deadline 3 Hari Lagi</b>\n📋 ${t.title}\n🗓 ${new Date(t.deadline).toLocaleDateString('id-ID')}\nJenis: ${t.type}`);
+  });
+
+  // Check pengikatan deadline
+  (DB.pengikatan||[]).filter(p => p.status !== 'Selesai' && p.deadline).forEach(p => {
+    const d = daysUntil(p.deadline);
+    if(d === 1) msgs.push(`⚖️ <b>Pengikatan DEADLINE BESOK!</b>\n👤 ${p.namaDebitur}\n🏛️ ${p.notaris||'-'}\n🗓 ${new Date(p.deadline).toLocaleDateString('id-ID')}`);
+    else if(d === 3) msgs.push(`⚖️ <b>Pengikatan 3 Hari Lagi</b>\n👤 ${p.namaDebitur}\n🏛️ ${p.notaris||'-'}\n🗓 ${new Date(p.deadline).toLocaleDateString('id-ID')}`);
+  });
+
+  if(msgs.length > 0) {
+    const header = `🏦 <b>BRIMEN Dashboard — Reminder</b>\n📍 Unit Pagelaran\n🕐 ${new Date().toLocaleString('id-ID')}\n\n`;
+    const full = header + msgs.join('\n\n───────────\n\n');
+    await sendTelegram(full);
+    localStorage.setItem(notifKey, '1');
+  }
+}
+
+// ============== LOG AKTIVITAS ==============
+function addLog(aksi, detail) {
+  const logs = JSON.parse(localStorage.getItem('brimen_log')||'[]');
+  logs.unshift({
+    waktu: new Date().toISOString(),
+    user: CURRENT_USER==='king'?'King Ozan':'Rakyat',
+    aksi, detail
+  });
+  // Keep only last 100 logs
+  localStorage.setItem('brimen_log', JSON.stringify(logs.slice(0,100)));
+}
+
+function renderLog() {
+  const logs = JSON.parse(localStorage.getItem('brimen_log')||'[]');
+  const tbl = document.getElementById('log-table'); if(!tbl) return;
+  if(logs.length === 0) {
+    tbl.innerHTML = '<tr><td colspan="4" style="padding:20px;text-align:center;color:var(--text3)">Belum ada aktivitas</td></tr>';
+    return;
+  }
+  tbl.innerHTML = logs.map(l => `<tr>
+    <td style="font-size:11px;font-family:var(--mono);white-space:nowrap">${new Date(l.waktu).toLocaleString('id-ID')}</td>
+    <td><span class="badge ${l.user==='King Ozan'?'badge-blue':'badge-yellow'}">${l.user}</span></td>
+    <td style="font-weight:600">${l.aksi}</td>
+    <td style="font-size:12px;color:var(--text2)">${l.detail}</td>
+  </tr>`).join('');
+}
+
+// ============== GLOBAL SEARCH ==============
+let globalSearchTimer = null;
+function globalSearch(q) {
+  clearTimeout(globalSearchTimer);
+  const res = document.getElementById('global-search-results');
+  if(!q || q.length < 2) { res.style.display='none'; return; }
+  globalSearchTimer = setTimeout(async () => {
+    const {data} = await sb.from('berkas')
+      .select('no_berkas,nama_debitur,norek,jenis_jaminan')
+      .or(`nama_debitur.ilike.%${q}%,norek.ilike.%${q}%,cif.ilike.%${q}%`)
+      .limit(8);
+    const taskResults = DB.tasks.filter(t => t.title?.toLowerCase().includes(q.toLowerCase())).slice(0,3);
+    const claimResults = DB.claims.filter(c => c.namaNasabah?.toLowerCase().includes(q.toLowerCase())).slice(0,3);
+
+    let html = '';
+    if(data?.length) {
+      html += `<div style="padding:8px 12px;font-size:10px;color:var(--text3);text-transform:uppercase;font-weight:700;letter-spacing:1px">📂 Berkas</div>`;
+      html += data.map(b => `<div class="gs-item" onclick="viewDetailBerkas('${b.no_berkas}');document.getElementById('global-search-results').style.display='none';document.getElementById('global-search-input').value=''">
+        <div style="font-weight:600">${b.nama_debitur}</div>
+        <div style="font-size:11px;color:var(--text3);font-family:var(--mono)">${b.norek} · ${b.jenis_jaminan||'-'}</div>
+      </div>`).join('');
+    }
+    if(taskResults.length) {
+      html += `<div style="padding:8px 12px;font-size:10px;color:var(--text3);text-transform:uppercase;font-weight:700;letter-spacing:1px">✅ Tugas</div>`;
+      html += taskResults.map(t => `<div class="gs-item" onclick="showPage('tasks');document.getElementById('global-search-results').style.display='none';document.getElementById('global-search-input').value=''">
+        <div style="font-weight:600">${t.title}</div>
+        <div style="font-size:11px;color:var(--text3)">${t.type} · ${new Date(t.deadline).toLocaleDateString('id-ID')}</div>
+      </div>`).join('');
+    }
+    if(claimResults.length) {
+      html += `<div style="padding:8px 12px;font-size:10px;color:var(--text3);text-transform:uppercase;font-weight:700;letter-spacing:1px">🔖 Claim</div>`;
+      html += claimResults.map(c => `<div class="gs-item" onclick="showPage('claim');document.getElementById('global-search-results').style.display='none';document.getElementById('global-search-input').value=''">
+        <div style="font-weight:600">${c.namaNasabah}</div>
+        <div style="font-size:11px;color:var(--text3)">${c.norek}</div>
+      </div>`).join('');
+    }
+    if(!html) html = '<div style="padding:16px;text-align:center;color:var(--text3);font-size:13px">Tidak ditemukan</div>';
+    res.innerHTML = html;
+    res.style.display = 'block';
+  }, 300);
+}
+
+// ============== QR CODE ==============
+function generateQR(noBerkas, namaDebitur, labelBerkas) {
+  const text = `BRIMEN|${noBerkas}|${namaDebitur}|${labelBerkas}`;
+  const url = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(text)}`;
+  const d = document.createElement('div');
+  d.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:500;display:flex;align-items:center;justify-content:center';
+  d.innerHTML = `<div style="background:var(--surface);border-radius:16px;padding:24px;text-align:center;max-width:280px">
+    <div style="font-size:15px;font-weight:700;margin-bottom:4px">${namaDebitur}</div>
+    <div style="font-size:12px;color:var(--accent);font-family:var(--mono);margin-bottom:12px">${noBerkas}</div>
+    <img src="${url}" style="width:200px;height:200px;border-radius:8px;border:1px solid var(--border)">
+    <div style="font-size:11px;color:var(--text3);margin-top:8px">${labelBerkas||'-'}</div>
+    <button onclick="this.parentElement.parentElement.remove()" style="margin-top:14px;padding:8px 20px;border-radius:8px;border:none;background:var(--accent);color:white;cursor:pointer;font-weight:600">Tutup</button>
+  </div>`;
+  d.addEventListener('click', e => { if(e.target===d) d.remove(); });
+  document.body.appendChild(d);
+}
+
+// ============== STATUS BERKAS ==============
+const STATUS_BERKAS = {
+  'Tersedia': {badge:'badge-green', icon:'✅'},
+  'Dipinjam': {badge:'badge-yellow', icon:'📤'},
+  'Di Notaris': {badge:'badge-purple', icon:'⚖️'},
+  'Sedang Diklaim': {badge:'badge-red', icon:'🔖'},
+  'Tidak Diketahui': {badge:'badge-gray', icon:'❓'}
+};
+
+function getBerkasStatus(noBerkas) {
+  const pinjam = DB.pinjaman.find(p => p.noBerkas===noBerkas && p.status==='Dipinjam');
+  if(pinjam) return {status:'Dipinjam', info:`Oleh: ${pinjam.mantri}`};
+  const pengikatan = (DB.pengikatan||[]).find(p => p.norek && DB.berkas.find(b=>b.noBerkas===noBerkas && b.norek===p.norek) && p.status!=='Selesai');
+  if(pengikatan) return {status:'Di Notaris', info:pengikatan.notaris||''};
+  const claim = DB.claims.find(c => { const b=DB.berkas.find(x=>x.noBerkas===noBerkas); return b && c.norek===b.norek && c.status!=='Selesai'; });
+  if(claim) return {status:'Sedang Diklaim', info:''};
+  return {status:'Tersedia', info:''};
+}
+
+// ============== INIT ==============
+updateDate();
+setInterval(updateDate, 60000);
+populateMantriSelects();
+renderKapasitasGrid(); renderJaminanKapasitasGrid();
+// Auto-refresh setiap 60 detik, silent mode (tidak ganggu user)
+setInterval(async () => { await dbLoad(true); }, 60000);
+// Load pertama dari Supabase
+dbLoad();
+</script>
+</body>
+</html>
